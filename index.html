@@ -776,6 +776,13 @@
     report:  { id: 'RP-20260803-004', status: '可导出' },
   };
 
+  const DEMO_PRESETS = [
+    { id: 'P-SLEEP-HUMAN', name: '人 · 整夜睡眠', presetKey: 'sleep-human', route: 'q-sleep', file: 'human_night1.edf', size: '486 MB', desc: 'EEG+EOG+EMG · 512 Hz · 8 h · 睡眠分期（AASM 五态）' },
+    { id: 'P-SLEEP-RAT', name: '鼠 · 整夜睡眠', presetKey: 'sleep-rat', route: 'q-sleep', file: 'rat_night1.edf', size: '318 MB', desc: 'EEG+EMG+ACC · 100 Hz · 2 h · 睡眠分期（鼠三态）' },
+    { id: 'P-ECG-HRV', name: '静息态心电（ECG/HRV）', presetKey: 'ecg', route: 'q-ecg', file: 'rest_ecg1.edf', size: '96 MB', desc: 'ECG · 500 Hz · 6 h · 基础心电检查与 HRV 综合评估' },
+    { id: 'P-EMG', name: '肌电活动（EMG）', presetKey: 'emg', route: 'q-emg', file: 'grip_emg1.edf', size: '42 MB', desc: 'EMG · 1000 Hz · 90 min · 肌电活动评估' },
+  ];
+
   const TASK_DESC = {
     'c-overview': '按 项目 → 受试者 → 数据 三级结构组织研究数据，支持批量分析与纵向追踪。',
     'c-data': '数据导入、格式检查、质控与标注。',
@@ -2227,6 +2234,13 @@
         <div class="progress" style="margin-top:10px"><i style="width:${Math.min(100, st.stageIdx * 30)}%"></i></div>
       </div>` : ''}
       <div class="card">
+        <h3>示例数据</h3>
+        <p class="small muted" style="margin:0 0 10px">内置模拟记录，一键载入并进入对应分析模块；无需外部文件。</p>
+        <div class="scheme-grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px">
+          ${DEMO_PRESETS.map((pr) => '<div class="scheme-card" data-demo-preset="' + pr.id + '" role="button" tabindex="0" style="padding:12px 14px"><h4 style="font-size:14px;margin:0 0 4px">' + pr.name + '</h4><p class="small muted" style="margin:0">' + pr.desc + '</p></div>').join('')}
+        </div>
+      </div>
+      <div class="card">
         <h3>演示模式</h3>
         <p class="small muted" style="margin:0 0 10px">在启动页点击“演示模式：自动走完流程”，自动完成从导入到导出的完整流程。</p>
         <div class="btn-row" style="margin-top:0;justify-content:flex-start">
@@ -3068,10 +3082,29 @@ ${qeegSubjectCard}
     seq.forEach((s) => { acc += s.d; App._demoTimer = setTimeout(s.fn, acc); });
   }
 
+  function loadDemoPreset(id) {
+    const pr = DEMO_PRESETS.find((x) => x.id === id);
+    if (!pr) return;
+    if (App.deploymentMode !== 'local') { toast('预置演示数据仅支持本地模式'); return; }
+    if (App.workspaceMode !== 'quick') enterQuick();
+    App.presetKey = pr.presetKey;
+    App.quickFile = { name: pr.file, sizeText: pr.size, modifiedText: '2026-08-06 预置演示', source: 'preset' };
+    App.importState = { stageIdx: 4, ok: true, warnings: [], preset: pr.id };
+    if (pr.presetKey === 'sleep-human' || pr.presetKey === 'sleep-rat') {
+      const slp = App.sleep;
+      slp.epochLen = pr.presetKey === 'sleep-rat' ? 4 : 30;
+      slp.eegCh = pr.presetKey === 'sleep-rat' ? 'EEG3' : 'C3-M2';
+      slp.emgCh = pr.presetKey === 'sleep-rat' ? 'EEG1' : 'Chin-EMG';
+    }
+    toast('已载入示例数据：' + pr.name);
+    navigate(pr.route);
+  }
+
   function bindDynamic() {
     document.querySelectorAll('.nav-btn[data-route]').forEach(b => b.addEventListener('click', () => navigate(b.dataset.route, { focus: b.dataset.focus })));
     const btnQuickFile = $('btnQuickFile');
     if (btnQuickFile) btnQuickFile.addEventListener('click', () => toast('已载入示例文件 sub-01_night1.edf（示例数据）'));
+    document.querySelectorAll('[data-demo-preset]').forEach((b) => b.addEventListener('click', () => loadDemoPreset(b.dataset.demoPreset)));
     const s1 = $('schemeStandard'), s2 = $('schemeMri');
     if (s1) s1.addEventListener('click', () => { App.simScheme = 'standard'; render(); });
     if (s2) s2.addEventListener('click', () => { App.simScheme = 'mri'; render(); });
