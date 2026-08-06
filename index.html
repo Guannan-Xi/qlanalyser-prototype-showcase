@@ -257,6 +257,212 @@
   .page-root .card { padding: 8px 12px; }
   .page-head { margin-bottom: 4px; }
 }
+
+.quick-choose-section {
+  margin-top: 18px;
+}
+
+.quick-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.quick-section-head h3,
+.quick-section-head p,
+.quick-choice-card h3,
+.quick-choice-card p {
+  margin: 0;
+}
+
+.quick-section-head p,
+.quick-choice-card p {
+  margin-top: 4px;
+}
+
+.quick-preset-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.quick-preset-card {
+  display: flex;
+  min-width: 0;
+  min-height: 190px;
+  flex-direction: column;
+  padding: 14px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.quick-preset-card:hover {
+  border-color: var(--primary);
+}
+
+.quick-preset-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.quick-preset-card.is-selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.quick-preset-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quick-preset-head h3 {
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.quick-preset-head .badge {
+  flex: 0 0 auto;
+}
+
+.quick-preset-meta {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.quick-preset-question {
+  margin: 10px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.quick-preset-actions {
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.quick-preset-actions .btn {
+  padding: 5px 10px;
+}
+
+.quick-choice-card {
+  margin-top: 14px;
+}
+
+.quick-choice-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.quick-choice-content > div {
+  min-width: 0;
+}
+
+.quick-choice-content > .btn {
+  flex: 0 0 auto;
+}
+
+.quick-template-row {
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 12px;
+}
+
+.quick-page-actions {
+  justify-content: space-between;
+  margin-top: 18px;
+}
+
+@media (max-width: 1080px) {
+  .quick-preset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .quick-preset-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .quick-choice-content,
+  .quick-page-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quick-choice-content > .btn,
+  .quick-page-actions .btn {
+    width: 100%;
+  }
+
+  .quick-template-row {
+    align-items: stretch;
+  }
+}
+/* CSS: K3 睡眠分期页 */
+.sleep-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+
+.sleep-stat-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+}
+
+.sleep-stat-card .table {
+  margin-bottom: 0;
+}
+
+.sleep-stat-card > .small {
+  flex: 1 1 auto;
+}
+
+.sleep-species-lock {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--border, #d9e0ea);
+  border-radius: 4px;
+  background: var(--surface-muted, #f7f9fc);
+}
+
+@media (max-width: 980px) {
+  .sleep-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .sleep-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nav-btn.nav-sub { padding: 6px 10px 6px 30px; font-size: 12px; opacity: .86; border-radius: 6px; }
+.nav-btn.nav-sub.active { background: var(--primary); opacity: 1; }
+.quick-preset-grid { grid-auto-rows: 1fr; }
+.quick-preset-grid > .quick-preset-card { margin: 0; }
+
 </style>
 </head>
 <body>
@@ -388,7 +594,7 @@
         <button class="btn" id="btnExit" type="button">退出到启动页</button>
       </header>
       <div class="page-root" id="pageRoot"></div>
-      <div class="workspace-foot">仅供科学研究参考，不用于临床诊断 · QLanalyser 1.0.0-beta-L（原型）</div>
+      <div class="workspace-foot">仅供科研参考，不用于临床诊断 · QLanalyser 1.0.0-beta-L（原型）</div>
     </section>
   </div>
 
@@ -516,7 +722,7 @@
   const ROUTES = {
     'q-home':     { label: '导入与检查',           role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickHome' },
     'q-overview': { label: '数据概览与预处理',   role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickOverview' },
-    'q-choose':   { label: '选择分析方式',       role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickChoose' },
+    'q-choose':   { label: '预置方案',       role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickChoose' },
     'q-custom':   { label: '自定义分析',         role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickCustom' },
     'q-guide':    { label: '帮我选分析',         role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickGuide' },
     'q-result':   { label: '运行与结果',         role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickResult' },
@@ -540,7 +746,18 @@
   };
 
   const NAV = {
-    quick:    { group: '快速分析', items: ['q-home', 'q-overview', 'q-choose', 'q-custom', 'q-guide', 'q-result'] },
+    quick:    {
+      group: '快速分析',
+      items: ['q-home', 'q-overview', {
+        label: '预置方案',
+        route: 'q-choose',
+        children: [
+          { route: 'q-choose', label: '方案列表', focus: 'preset' },
+          { route: 'q-custom', label: '自定义分析' },
+          { route: 'q-guide', label: '帮我选分析' }
+        ]
+      }, 'q-result']
+    },
     customer: { group: '项目管理',     items: ['c-overview', 'c-data', 'c-workflow', 'c-results', 'c-qeeg', 'c-profile', 'c-sim', 'c-spike'] }
   };
 
@@ -619,7 +836,7 @@
   }
 
   function capabilityText() {
-    return App.workspaceMode === 'quick' ? '快速分析 · 本地' : '项目分析 · ' + roleLabel();
+    return App.workspaceMode === 'quick' ? '本地' : roleLabel();
   }
 
   function accountText() {
@@ -651,10 +868,18 @@
     navGroups.innerHTML = groups.map(g => `
       <div class="nav-label">${g.group}</div>
       <nav class="nav-list">
-        ${g.items.map(id => {
-          const r = ROUTES[id];
-          const flag = r.featureFlag === 'sim' || r.featureFlag === 'spike' ? ' <span class="nav-tag amber">' + (r.featureFlag === 'sim' ? 'V2' : 'V3') + '</span>' : '';
-          return `<button class="nav-btn ${App.activeRoute === id ? 'active' : ''}" data-route="${id}" type="button">${r.label}${flag}</button>`;
+        ${g.items.map((item) => {
+          if (typeof item === 'string') {
+            const r = ROUTES[item];
+            const flag = r.featureFlag === 'sim' || r.featureFlag === 'spike' ? ' <span class="nav-tag amber">' + (r.featureFlag === 'sim' ? 'V2' : 'V3') + '</span>' : '';
+            return `<button class="nav-btn ${App.activeRoute === item ? 'active' : ''}" data-route="${item}" type="button">${r.label}${flag}</button>`;
+          }
+          const isParentActive = App.activeRoute === item.route || (item.children || []).some((c) => App.activeRoute === c.route);
+          const subs = (item.children || []).map((c) => {
+            const cr = ROUTES[c.route];
+            return `<button class="nav-btn nav-sub ${App.activeRoute === c.route ? 'active' : ''}" data-route="${c.route}"${c.focus ? ` data-focus="${c.focus}"` : ''} type="button">${cr.label}</button>`;
+          }).join('');
+          return `<button class="nav-btn ${isParentActive ? 'active' : ''}" data-route="${item.route}" type="button">${item.label}</button>${subs}`;
         }).join('')}
       </nav>`).join('');
     $('roleSubtitle').textContent = App.workspaceMode === 'quick' ? '快速分析工作区' : roleLabel() + ' · 项目分析';
@@ -671,7 +896,12 @@
 
   function renderTopbar() {
     const r = ROUTES[App.activeRoute];
-    pageTitle.textContent = r ? (r.featureFlag === 'sim' ? '仿真（脑刺激电场）V2 · 规划中' : r.featureFlag === 'spike' ? 'Spike 分析 V3 · 规划中' : r.label) : '工作台';
+    pageTitle.textContent = r
+      ? (r.featureFlag === 'sim' ? '仿真（脑刺激电场）V2 · 规划中'
+        : r.featureFlag === 'spike' ? 'Spike 分析 V3 · 规划中'
+        : App.workspaceMode === 'quick' ? '快速分析'
+        : '项目分析')
+      : '工作台';
     capTag.textContent = capabilityText();
     capTag.className = 'cap-tag ' + capTagClass();
     accountChip.textContent = accountText();
@@ -684,7 +914,7 @@
   }
 
   function boundaryNote() {
-    return '<div class="notice boundary">仅供科学研究参考，不用于临床诊断。' + (App.workspaceMode === 'quick' ? '本工作区数据仅保存在本机。' : '') + '</div>';
+    return '<div class="notice boundary">仅供科研参考，不用于临床诊断。' + (App.workspaceMode === 'quick' ? '工作区数据仅保存在本机。' : '') + '</div>';
   }
 
   function sleepReviewPage() {
@@ -775,7 +1005,7 @@
         <button class="btn primary" id="btnFullRun" type="button" disabled>沿用配置转全量 →</button>
       </div>
       <div class="btn-row" style="justify-content:space-between">
-        <button class="btn" id="btnBackChoose" type="button">← 返回选择分析方式</button>
+        <button class="btn" id="btnBackChoose" type="button">← 返回预置方案</button>
       </div>
       ${boundaryNote()}`;
   }
@@ -865,13 +1095,13 @@
       <div class="card">${body}</div>
       <div class="btn-row" style="justify-content:space-between">
         <button class="btn" id="btnBackProjects" type="button">← 返回项目列表</button>
-        <button class="btn primary" data-start-analysis="1" type="button">开始分析（选数据集合 → 选择分析方式）→</button>
+        <button class="btn primary" data-start-analysis="1" type="button">开始分析（选数据集合 → 预置方案）→</button>
       </div>
       ${boundaryNote()}`;
   }
 
   function quickSteps(cur) {
-    const names = ['导入与检查', '数据概览', '选择分析方式', '运行与结果'];
+    const names = ['导入与检查', '数据概览', '预置方案', '运行与结果'];
     return '<div class="steps" style="margin-bottom:12px">' + names.map((s, i) => '<span class="step ' + (i + 1 === cur ? 'now' : i + 1 < cur ? 'done' : '') + '"><span class="n">' + (i + 1) + '</span>' + s + '</span>').join('') + '</div>';
   }
 
@@ -1103,7 +1333,7 @@
         <div class="notice info" style="margin:8px 0 0">白话解释：分析范围=只分析工作区间中的这一段；滤波后信号=减少不需要的波动；强度包络=把快速波动整理成便于观察活动强弱的曲线。正式方法与参数待 D-02/D-08 定版。</div>
         <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
           <button class="btn primary" id="btnEmgStart" type="button"${notReady || emg.runStatus === 'running' ? ' disabled' : ''}>开始分析（演示）</button>
-          <button class="btn" id="btnEmgBack" type="button">← 返回选择分析方式</button>
+          <button class="btn" id="btnEmgBack" type="button">← 返回预置方案</button>
         </div>
         ${runningNote}
       </div>
@@ -1259,7 +1489,7 @@
         <details style="margin-top:8px"><summary class="small muted" style="cursor:pointer">方法摘要（白话）</summary><div class="small muted" style="margin-top:4px">系统先找出无法可靠分析的片段并跳过，再检测每次心跳；差段跳过，不跨差段计算 RR。HRV 仅在有效心搏足够时计算。正式参数待 D-02/D-08 定版。</div></details>
         <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
           <button class="btn primary" id="btnEcgStart" type="button"${notReady || st.runStatus === 'running' ? ' disabled' : ''}>开始分析（演示）</button>
-          <button class="btn" id="btnEcgBack" type="button">← 返回选择分析方式</button>
+          <button class="btn" id="btnEcgBack" type="button">← 返回预置方案</button>
         </div>
         ${runningNote}
       </div>
@@ -1373,114 +1603,269 @@
     toast('Epoch ' + (st.selected + 1) + ' 已修订为 ' + (sleepStageLabels()[stage] || stage));
   }
   function sleepWorkbenchPage() {
-    const st = App.sleep;
-    const species = st.species || 'human';
-    const colors = sleepStageColors(species);
-    const labels = sleepStageLabels(species);
-    const stages = st.stages || [];
-    const notReady = (!App.importState || !App.importState.ok) && !App.quickFile;
-    const preVer = (App.preVersions || []).length ? App.preVersions[App.preVersions.length - 1].id : 'Preprocess-0（未应用）';
-    const stats = stages.length ? sleepStats(stages, species) : null;
-    const cells = stages.map(function (s, i) {
-      return '<button class="epoch-cell' + (st.video && st.video.epoch === i ? ' sleep-now' : '') + '" data-sleep-epoch="' + i + '" data-stage="' + s + '" style="background:' + (colors[s] || '#eee') + ';border:2px solid ' + (st.selected === i ? '#e46a50' : '#fff') + ';border-radius:4px;font-size:11px;color:#173469" title="Epoch ' + (i + 1) + '：' + (labels[s] || s) + '（Shift+1/2/3 修订）">' + (i + 1) + '<br>' + (labels[s] || s) + '</button>';
-    }).join('');
-    const runningNote = st.runStatus === 'running' ? '<div class="progress" style="margin-top:10px"><i id="sleepProgress" style="width:' + (st.progress || 0) + '%"></i></div><div class="muted small" style="margin-top:4px">正在自动分期（演示）… 请勿关闭页面</div>' : '';
-    const vid = st.video;
-    const videoCard = vid && vid.src ? `
+  const st = App.sleep;
+  const species = App.presetKey === 'sleep-rat'
+    ? 'rat'
+    : App.presetKey === 'sleep-human'
+      ? 'human'
+      : (st.species || 'human');
+
+  // 工作台物种由预置方案锁定，避免页面状态残留造成口径混用。
+  st.species = species;
+
+  const colors = sleepStageColors(species);
+  const labels = sleepStageLabels(species);
+  const stages = st.stages || [];
+  const notReady = (!App.importState || !App.importState.ok) && !App.quickFile;
+  const preVer = (App.preVersions || []).length
+    ? App.preVersions[App.preVersions.length - 1].id
+    : 'Preprocess-0（未应用）';
+  const stats = stages.length ? sleepStats(stages, species) : null;
+  const speciesBadge = species === 'rat'
+    ? '<span class="badge blue">鼠（Wake/NREM/REM）</span>'
+    : '<span class="badge blue">人（AASM）</span>';
+  const speciesText = species === 'rat'
+    ? '鼠类睡眠分期按 Wake、NREM、REM 统计。'
+    : '人类睡眠分期按 AASM 的 Wake、N1、N2、N3、REM 统计。';
+
+  const cells = stages.map(function (s, i) {
+    return '<button class="epoch-cell' +
+      (st.video && st.video.epoch === i ? ' sleep-now' : '') +
+      '" data-sleep-epoch="' + i +
+      '" data-stage="' + s +
+      '" style="background:' + (colors[s] || '#eee') +
+      ';border:2px solid ' + (st.selected === i ? '#e46a50' : '#fff') +
+      ';border-radius:4px;font-size:11px;color:#173469" title="Epoch ' +
+      (i + 1) + '：' + (labels[s] || s) +
+      '">' + (i + 1) + '<br>' + (labels[s] || s) + '</button>';
+  }).join('');
+
+  const runningNote = st.runStatus === 'running'
+    ? '<div class="progress" style="margin-top:10px">' +
+      '<i id="sleepProgress" style="width:' + (st.progress || 0) + '%"></i>' +
+      '</div><div class="muted small" style="margin-top:4px">正在自动分期，请勿关闭页面</div>'
+    : '';
+
+  const vid = st.video;
+  const videoCard = vid && vid.src
+    ? `
       <div class="card">
         <h3>同步视频（睡眠录像，可选）${vid.playing ? ' <span class="badge blue">播放中</span>' : ''}</h3>
         <div class="grid-2" style="align-items:start">
           <div>
-            <video id="slpVideo" controls playsinline preload="metadata" style="width:100%;max-height:280px;background:#000;border-radius:6px" src="${vid.src}"></video>
+            <video id="slpVideo" controls playsinline preload="metadata"
+              style="width:100%;max-height:280px;background:#000;border-radius:6px"
+              src="${vid.src}"></video>
             <div class="btn-row" style="justify-content:flex-start;margin-top:6px">
-              <button class="btn" id="btnSleepVideoPlay" type="button">${vid.playing ? '暂停' : '播放'}</button>
+              <button class="btn" id="btnSleepVideoPlay" type="button">
+                ${vid.playing ? '暂停' : '播放'}
+              </button>
               <button class="btn" id="btnSleepVideoClear" type="button">移除视频</button>
-              <label class="small muted" style="display:inline-flex;align-items:center;gap:4px;margin:0"><input type="checkbox" id="slpVideoSync"${vid.synced === false ? '' : ' checked'}> 与 Epoch 同步</label>
-              <span class="small muted" id="slpVideoTime">${sleepFmtTime(vid.time || 0)} / ${sleepFmtTime(vid.duration || 0)}</span>
+              <label class="small muted" style="display:inline-flex;align-items:center;gap:4px;margin:0">
+                <input type="checkbox" id="slpVideoSync"${vid.synced === false ? '' : ' checked'}>
+                与 Epoch 同步
+              </label>
+              <span class="small muted" id="slpVideoTime">
+                ${sleepFmtTime(vid.time || 0)} / ${sleepFmtTime(vid.duration || 0)}
+              </span>
             </div>
           </div>
           <div>
             <b>同步位置</b>
             <div style="display:flex;flex-wrap:wrap;gap:2px;margin:6px 0">${cells}</div>
-            <p class="small muted" id="slpVideoHint" style="margin:6px 0 0">${sleepVideoHintText()}</p>
+            <p class="small muted" id="slpVideoHint" style="margin:6px 0 0">
+              ${sleepVideoHintText()}
+            </p>
           </div>
         </div>
-        <p class="small muted" style="margin:8px 0 0">视频仅在本地浏览器播放、不离开本机；点击 Epoch 跳转视频到对应时间，播放视频时高亮当前 Epoch（${st.epochLen || 30} 秒/段）。</p>
-      </div>` : `
+        <p class="small muted" style="margin:8px 0 0">
+          视频仅在本地浏览器播放，不上传或离开本机；点击 Epoch 可跳转到对应时间，播放时高亮当前 Epoch（${st.epochLen || 30} 秒/段）。
+        </p>
+      </div>`
+    : `
       <div class="card">
         <h3>同步视频（睡眠录像，可选）</h3>
-        <div class="placeholder-box" style="margin-bottom:8px">尚未导入睡眠录像。可导入与记录时间对应的视频，播放时与 Epoch 分期同步定位（演示流程；视频仅在本地播放，不上传）。</div>
+        <div class="placeholder-box" style="margin-bottom:8px">
+          尚未导入睡眠录像。可导入与记录时间对应的视频，播放时与 Epoch 分期同步定位。
+        </div>
         <button class="btn" id="btnSleepVideoImport" type="button">导入视频…</button>
       </div>`;
-    return `
-      <div class="page-head">
-        <div><h2>标准睡眠分期评估</h2><p class="desc">选择通道与 Epoch，自动分期后联合查看；按 Epoch 人工修订（Shift+1/2/3），四类统计联动重算。</p></div>
+
+  return `
+    <div class="page-head">
+      <div>
+        <h2>标准睡眠分期评估</h2>
+        <p class="desc">配置通道与 Epoch，运行自动分期后查看并修订当前物种的睡眠结构。</p>
+      </div>
+      <div class="btn-row" style="margin:0">
+        ${speciesBadge}
         <span class="cap-tag ${capTagClass()}">${capabilityText()}</span>
       </div>
-      ${notReady ? '<div class="notice warn"><b>前置未满足：</b>请先在导入模块完成数据导入（EDF/BDF → 工作副本），再进入睡眠分析。</div>' : ''}
-      <div class="card">
-        <h3>输入配置</h3>
-        <p class="muted small" style="margin:0 0 8px">数据版本：${preVer}（共享预处理只读输入）</p>
-        <div class="grid-2">
-          <div class="field"><span>EEG 通道（用于分期）</span><select class="select" id="slpEeg"${st.runStatus === 'running' ? ' disabled' : ''}><option>C3-M2</option><option>Fz-Cz</option></select></div>
-          <div class="field"><span>EMG 通道</span><select class="select" id="slpEmg"${st.runStatus === 'running' ? ' disabled' : ''}><option>Chin-EMG</option></select></div>
-          <div class="field"><span>Epoch 长度（秒，10–60）</span><input class="input" id="slpEpoch" type="number" value="${st.epochLen || 30}" min="10" max="60"${st.runStatus === 'running' ? ' disabled' : ''}></div>
-          <div class="field"><span>分期模型（物种）</span><select class="select" id="slpSpecies"${st.runStatus === 'running' ? ' disabled' : ''}><option value="human"${species === 'human' ? ' selected' : ''}>人（AASM：Wake / N1 / N2 / N3 / REM）</option><option value="rat"${species === 'rat' ? ' selected' : ''}>鼠（Wake / NREM / REM）</option></select></div>
+    </div>
+
+    ${notReady
+      ? '<div class="notice warn"><b>前置未满足：</b>请先在导入模块完成数据导入（EDF/BDF → 工作副本），再进入睡眠分析。</div>'
+      : ''}
+
+    <div class="card">
+      <h3>输入配置</h3>
+      <p class="muted small" style="margin:0 0 8px">
+        数据版本：${preVer}（共享预处理只读输入）
+      </p>
+      <div class="grid-2">
+        <div class="field">
+          <span>EEG 通道（用于分期）</span>
+          <select class="select" id="slpEeg"${st.runStatus === 'running' ? ' disabled' : ''}>
+            <option>C3-M2</option>
+            <option>Fz-Cz</option>
+          </select>
         </div>
-        <div class="notice info" style="margin:8px 0 0">白话解释：自动分期把整晚数据按 30 秒一段标记睡眠阶段：人=清醒/N1/N2/N3/REM（AASM），鼠=清醒/NREM/REM。模型输入处理由软件完成，你不需要手工操作。鼠模型口径待 D-02/D-03 定版。</div>
-        <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
-          <button class="btn primary" id="btnSleepStart" type="button"${notReady || st.runStatus === 'running' ? ' disabled' : ''}>开始分析（演示）</button>
-          <button class="btn" id="btnSleepBack" type="button">← 返回选择分析方式</button>
+        <div class="field">
+          <span>EMG 通道</span>
+          <select class="select" id="slpEmg"${st.runStatus === 'running' ? ' disabled' : ''}>
+            <option>Chin-EMG</option>
+          </select>
         </div>
-        ${runningNote}
+        <div class="field">
+          <span>Epoch 长度（秒，10–60）</span>
+          <input class="input" id="slpEpoch" type="number"
+            value="${st.epochLen || 30}" min="10" max="60"
+            ${st.runStatus === 'running' ? 'disabled' : ''}>
+        </div>
+        <div class="field">
+          <span>当前分期口径</span>
+          <div class="sleep-species-lock">
+            ${speciesBadge}
+            <span class="small muted">${speciesText}</span>
+          </div>
+        </div>
       </div>
-      ${videoCard}
-      ${stages.length ? `
+
+      <div class="notice info" style="margin:8px 0 0">
+        <b>白话解释：</b>${speciesText}
+      </div>
+
+      <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
+        <button class="btn primary" id="btnSleepStart" type="button"
+          ${notReady || st.runStatus === 'running' ? 'disabled' : ''}>
+          开始分析
+        </button>
+        <button class="btn" id="btnSleepBack" type="button">← 返回预置方案</button>
+      </div>
+      ${runningNote}
+    </div>
+
+    ${videoCard}
+
+    ${stages.length
+      ? `
       <div class="card" style="${st.configDirty ? 'opacity:.85' : ''}">
-        <h3>联合查看与人工修订${st.configDirty ? ' <span class="badge warn">配置已更改，结果过期</span>' : ''}</h3>
-        ${st.configDirty ? '<div class="notice warn" style="margin:0 0 8px"><b>结果对应旧配置：</b>重新运行后才会更新，旧结果不导出。</div>' : ''}
-        <div class="placeholder-box" style="margin-bottom:10px">原始波形 / 时频图：当前 Epoch 高亮，显示前后相邻 Epoch（模拟渲染）· EEG C3-M2 / EMG Chin-EMG</div>
+        <h3>
+          联合查看与人工修订
+          ${st.configDirty
+            ? ' <span class="badge warn">结果对应旧配置</span>'
+            : ''}
+        </h3>
+
+        ${st.configDirty
+          ? '<div class="notice warn" style="margin:0 0 8px">结果对应旧配置，重新运行后才会更新，旧结果不可导出。</div>'
+          : ''}
+
+        <div class="placeholder-box" style="margin-bottom:10px">
+          原始波形 / 时频图：当前 Epoch 高亮，显示前后相邻 Epoch（模拟渲染）· EEG C3-M2 / EMG Chin-EMG
+        </div>
         <div style="display:flex;flex-wrap:wrap;gap:2px">${cells}</div>
-        <p class="small muted" style="margin:8px 0 0">点击 Epoch 选中；Shift+1=Wake / Shift+2=NREM / Shift+3=REM；支持撤销/重做；修订后统计即时重算。已导入同步视频时，点击 Epoch 会同步跳转视频到对应时间。</p>
+        <p class="small muted" style="margin:8px 0 0">
+          点击 Epoch 选中；Shift+1=Wake / Shift+2=NREM / Shift+3=REM；
+          支持撤销/重做；修订后统计即时重算。已导入同步视频时，点击 Epoch 会同步跳转视频到对应时间。
+        </p>
         <div class="btn-row" style="justify-content:flex-start;margin-top:8px">
-          <button class="btn" id="btnSleepUndo" type="button"${!(st.history || []).length ? ' disabled' : ''}>撤销</button>
-          <button class="btn" id="btnSleepRedo" type="button"${!(st.future || []).length ? ' disabled' : ''}>重做</button>
-          ${st.selected !== null ? '<span class="badge warn" style="margin-left:6px">已选 Epoch ' + (st.selected + 1) + '：' + (labels[stages[st.selected]] || stages[st.selected]) + '（按 Shift+1/2/3 修改）</span>' : ''}
+          <button class="btn" id="btnSleepUndo" type="button"
+            ${!(st.history || []).length ? 'disabled' : ''}>撤销</button>
+          <button class="btn" id="btnSleepRedo" type="button"
+            ${!(st.future || []).length ? 'disabled' : ''}>重做</button>
+          ${st.selected !== null
+            ? '<span class="badge warn" style="margin-left:6px">已选 Epoch ' +
+              (st.selected + 1) + '：' +
+              (labels[stages[st.selected]] || stages[st.selected]) +
+              '</span>'
+            : ''}
         </div>
       </div>
+
       <div class="card">
         <h3>统计（修订联动重算）</h3>
-        <div class="grid-2">
-          <div class="card" style="margin:0"><b>基础指标</b><div class="small" style="margin-top:4px">TST ${stats.tst} min · 睡眠效率 ${stats.se}% · REM 占比 ${stats.rem}%</div><table class="table" style="margin-top:6px"><thead><tr><th>阶段</th><th>时长</th><th>占比</th></tr></thead><tbody>${stats.stageRows}</tbody></table></div>
-          <div class="card" style="margin:0"><b>功率与慢波（演示）</b><div class="small" style="margin-top:4px">${stats.power}<br>${stats.slowWave}</div></div>
-          <div class="card" style="margin:0"><b>片段与转换</b><div class="small" style="margin-top:4px">片段数 ${stats.segments} · 平均片段时长 ${(stages.length * (st.epochLen || 30) / 60 / stats.segments).toFixed(1)} min<br>阶段转换 ${stats.trans} 次</div></div>
-          <div class="card" style="margin:0"><b>潜伏期（从记录开始起算）</b><div class="small" style="margin-top:4px">首次 NREM ${stats.nremLat} min · 首次 REM（自 NREM 起）${stats.remLat} min</div></div>
+        <div class="sleep-stats-grid">
+          <div class="card sleep-stat-card" style="margin:0">
+            <b>基础指标</b>
+            <div class="small" style="margin-top:4px">
+              TST ${stats.tst} min · 睡眠效率 ${stats.se}% · REM 占比 ${stats.rem}%
+            </div>
+            <table class="table" style="margin-top:6px">
+              <thead><tr><th>阶段</th><th>时长</th><th>占比</th></tr></thead>
+              <tbody>${stats.stageRows}</tbody>
+            </table>
+          </div>
+
+          <div class="card sleep-stat-card" style="margin:0">
+            <b>功率与慢波</b>
+            <div class="small" style="margin-top:4px">
+              ${stats.power}<br>${stats.slowWave}
+            </div>
+          </div>
+
+          <div class="card sleep-stat-card" style="margin:0">
+            <b>片段与转换</b>
+            <div class="small" style="margin-top:4px">
+              片段数 ${stats.segments} · 平均片段时长
+              ${(stages.length * (st.epochLen || 30) / 60 / stats.segments).toFixed(1)} min<br>
+              阶段转换 ${stats.trans} 次
+            </div>
+          </div>
+
+          <div class="card sleep-stat-card" style="margin:0">
+            <b>潜伏期（从记录开始起算）</b>
+            <div class="small" style="margin-top:4px">
+              首次 NREM ${stats.nremLat} min · 首次 REM（自 NREM 起）${stats.remLat} min
+            </div>
+          </div>
         </div>
+
         <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
-          <button class="btn" id="btnSleepExportData" type="button"${st.configDirty ? ' disabled' : ''}>导出分期数据 CSV →</button>
-          <button class="btn" id="btnSleepExportChart" type="button"${st.configDirty ? ' disabled' : ''}>导出图表 SVG →</button>
-          ${st.configDirty ? ' <button class="btn primary" id="btnSleepRerun" type="button">重新运行</button>' : ''}
+          <button class="btn" id="btnSleepExportData" type="button"
+            ${st.configDirty ? 'disabled' : ''}>导出分期数据 CSV →</button>
+          <button class="btn" id="btnSleepExportChart" type="button"
+            ${st.configDirty ? 'disabled' : ''}>导出图表 SVG →</button>
+          ${st.configDirty
+            ? ' <button class="btn primary" id="btnSleepRerun" type="button">重新运行</button>'
+            : ''}
         </div>
-        ${(st.exportLog || []).length ? '<div class="muted small" style="margin-top:8px">导出记录（演示结构，RES-005 待定版）：' + (st.exportLog || []).map(function (l) { return l.time + ' ' + l.type + '（' + l.format + '）'; }).join('；') + '</div>' : ''}
-      </div>` : '<div class="card"><h3>分析结果</h3><div class="placeholder-box">尚未分析。配置上方输入后点击“开始分析”（演示数据）。</div></div>'}
-      <div class="notice warn"><b>演示模式声明：</b>自动分期、功率/慢波与潜伏期均为确定性演示数据，不构成临床诊断依据；真实分析需接入已验证的睡眠分期算法。</div>
-      ${boundaryNote()}`;
-  }
+
+        ${(st.exportLog || []).length
+          ? '<div class="muted small" style="margin-top:8px">导出记录：' +
+            (st.exportLog || []).map(function (l) {
+              return l.time + ' ' + l.type + '（' + l.format + '）';
+            }).join('；') +
+            '</div>'
+          : ''}
+      </div>`
+      : `
+      <div class="card">
+        <h3>分析结果</h3>
+        <div class="placeholder-box">
+          尚未分析。配置上方输入后点击“开始分析”。
+        </div>
+      </div>`}
+
+    <div class="notice warn">
+      <b>演示模式声明：</b>
+      自动分期、功率/慢波与潜伏期均为确定性演示数据，不构成临床诊断依据；真实分析需接入已验证的睡眠分期算法。
+    </div>
+
+    ${boundaryNote()}`;
+}
 
 
-
-  /* ==== V1 批次⑤（2026-08-06）：癫痫筛查模块（确定性演示） ==== */
-  const EPI_FIXTURE = {
-    thr: [
-      { start: 1.2, end: 2.6, label: '疑似事件 1', amp: '180 µV' },
-      { start: 5.1, end: 6.0, label: '疑似事件 2', amp: '165 µV' },
-      { start: 8.4, end: 10.1, label: '疑似事件 3', amp: '210 µV' }
-    ],
-    ml: [
-      { start: 2.0, end: 3.0, label: '疑似事件 A', score: '0.87' },
-      { start: 7.5, end: 8.8, label: '疑似事件 B', score: '0.79' }
-    ]
-  };
   function epiWaveSvgHtml(events) {
     const rowH = 56, labelW = 72, pad = 8, topH = 30;
     const W = 980, H = topH + rowH + 30;
@@ -1552,7 +1937,7 @@
         <div class="notice info" style="margin:8px 0 0">白话解释：阈值初筛按幅度标准自动找出疑似事件；ML 筛查用训练好的模型找出疑似事件。两种方法结果分开看、分别复核；筛查结果仅作辅助参考，不构成临床诊断。参数口径待 D-02/D-08 定版。</div>
         <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
           <button class="btn primary" id="btnEpiStart" type="button"${notReady || st.runStatus === 'running' ? ' disabled' : ''}>开始筛查（演示）</button>
-          <button class="btn" id="btnEpiBack" type="button">← 返回选择分析方式</button>
+          <button class="btn" id="btnEpiBack" type="button">← 返回预置方案</button>
         </div>
         ${runningNote}
       </div>
@@ -1635,7 +2020,7 @@
         <div class="notice warn" style="margin:8px 0 0"><b>口径细化中：</b>麻醉深度指数为演示曲线（0–100 示意），正式参数/算法/报告口径待定（PC 保留项），不构成临床麻醉监护结论。</div>
         <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
           <button class="btn primary" id="btnAnxStart" type="button"${notReady || st.runStatus === 'running' ? ' disabled' : ''}>开始分析（演示）</button>
-          <button class="btn" id="btnAnxBack" type="button">← 返回选择分析方式</button>
+          <button class="btn" id="btnAnxBack" type="button">← 返回预置方案</button>
         </div>
         ${runningNote}
       </div>
@@ -2005,13 +2390,37 @@
       ${prePanelHtml()}
       <div class="btn-row" style="justify-content:space-between">
         <button class="btn" id="btnQuickPrevOverview" type="button">← 上一步：导入文件</button>
-        <button class="btn primary" id="btnQuickNextChoose" type="button">下一步：选择分析方式 →</button>
+        <button class="btn primary" id="btnQuickNextChoose" type="button">下一步：预置方案 →</button>
       </div>
       ${boundaryNote()}`;
   }
 
   const PRESET_DOCS = {
   sleep: { name: '标准睡眠分期评估', q: '睡眠结构：各期占比、阶段转换、潜伏期与慢波活动（人 AASM / 鼠 Wake-NREM-REM）', fit: '整夜睡眠记录（人 / 鼠），或干预前后睡眠结构对比', steps: '①通道与 Epoch 配置 → ②自动分期（Wake/NREM/REM）→ ③联合查看 → ④（可选）按 Epoch 人工修订 → ⑤统计与报告', methodsTxt: '睡眠模型（版本待冻结，D-02）+ Wake/NREM/REM 三分类；统计 = 时程 + 功率与慢波 + 片段与转换 + 潜伏期', meaning: '分期占比、时程统计、功率与慢波活动、片段与转换、NREM/REM 潜伏期', param: '默认 Epoch 时长与统计口径按源码基线冻结（D-02/D-08），用户可调并记录偏离', report: '通用框架 + 睡眠分期统计章节（分期图、统计表、功率/慢波图、片段转换表、潜伏期）', verify: '待评审（验证样本：已知分期的标准记录）', limit: '分期结果依赖模型与信号质量；人工修订后统计以修订结果为准' },
+'sleep-human': {
+  name: '标准睡眠分期评估 · 人',
+  q: '人类睡眠结构：Wake/N1/N2/N3/REM 各期占比、阶段转换、潜伏期与慢波活动',
+  fit: '整夜人类睡眠记录，或干预前后人类睡眠结构对比',
+  steps: '①通道与 Epoch 配置 → ②自动分期（Wake/N1/N2/N3/REM）→ ③联合查看 → ④按 Epoch 人工修订 → ⑤统计与报告',
+  methodsTxt: '睡眠模型（AASM，版本待冻结，D-02）+ Wake/N1/N2/N3/REM 五分类',
+  meaning: '分期占比、时程统计、功率与慢波活动、片段与转换、NREM/REM 潜伏期',
+  param: '默认 Epoch 时长与统计口径按源码基线冻结（D-02/D-08），用户可调并记录偏离',
+  report: '通用框架 + 人类睡眠分期统计章节',
+  verify: '待评审（验证样本：已知分期的标准人类睡眠记录）',
+  limit: '分期结果依赖模型与信号质量；人工修订后统计以修订结果为准'
+},
+'sleep-rat': {
+  name: '标准睡眠分期评估 · 鼠',
+  q: '鼠类睡眠结构：Wake/NREM/REM 各期占比、阶段转换、潜伏期与慢波活动',
+  fit: '整夜鼠类睡眠记录，或干预前后鼠类睡眠结构对比',
+  steps: '①通道与 Epoch 配置 → ②自动分期（Wake/NREM/REM）→ ③联合查看 → ④按 Epoch 人工修订 → ⑤统计与报告',
+  methodsTxt: '鼠类睡眠模型 + Wake/NREM/REM 三分类；统计 = 时程 + 功率与慢波 + 片段与转换 + 潜伏期',
+  meaning: '分期占比、时程统计、功率与慢波活动、片段与转换、NREM/REM 潜伏期',
+  param: '默认 Epoch 时长与统计口径按源码基线冻结（D-02/D-08），用户可调并记录偏离',
+  report: '通用框架 + 鼠类睡眠分期统计章节',
+  verify: '待评审（验证样本：已知分期的标准鼠类睡眠记录）',
+  limit: '分期结果依赖模型与信号质量；人工修订后统计以修订结果为准'
+},
   ecg: { name: '基础心电检查', q: '心率及其时间序列特征', fit: '静息/任务态心电记录', steps: '①ECG 通道配置 → ②R 峰检测与质控 → ③RR/心率序列与区间平均心率 → ④结果查看 → ⑤报告', methodsTxt: 'R 峰检测 + 区间平均心率', meaning: 'R 峰位置、RR 间期、心率、DeltaRR；跨无效片段 RR 断开；区间平均心率', param: '默认参数按源码基线冻结（D-08 定版）', report: '通用框架 + 心电基础指标章节', verify: '待评审（固定样本）', limit: '无效片段按 ECG 规则处理；部分有效结果导出附排除说明' },
   hrv: { name: 'HRV 综合评估', q: '心率变异性（HRV）：时域/频域/非线性指标', fit: '静息或任务态心电，干预前后对照', steps: '①ECG 通道配置 → ②R 峰检测与无效片段处理 → ③HRV 可用性判断 → ④三域指标计算 → ⑤报告', methodsTxt: 'R 峰检测 + HRV 时域 + 频域 + 非线性（记录计算后端）', meaning: '时域（SDNN/RMSSD/pNN50）、频域（LF/HF）、非线性（SD1/SD2 等）', param: '默认参数按源码基线冻结；LF/HF 频段边界与计算后端待 D-02/D-08 确认', report: '通用框架 + HRV 时域/频域/非线性章节（指标表 + 频谱图）', verify: '待评审（已知心率的固定样本）', limit: '无效片段按 ECG-010 处理；跨无效片段 RR 断开；部分有效结果导出附排除说明' },
   epi1: { name: '癫痫筛查·快速初筛', q: '有哪些疑似事件（辅助参考）', fit: '长程脑电筛查', steps: '①通道/范围配置 → ②Threshold 快速初筛 → ③按 Epoch 人工复核 → ④统计与导出', methodsTxt: '阈值筛查（RMS）快速模板', meaning: '疑似事件列表、按 Epoch 复核、事件整理与统计', param: '阈值参数按源码基线冻结（D-08 定版）', report: '通用框架 + 筛查事件与复核章节（附“仅作辅助参考，不构成临床诊断”）', verify: '待评审', limit: '筛查结果不构成临床诊断；两方法结果隔离，不混淆' },
@@ -2024,47 +2433,104 @@
 function quickChoosePage() {
     const isFull = App.workspaceMode === 'full';
     const presets = [
-      { key: 'sleep', name: '标准睡眠分期评估', q: '睡眠结构：各期占比、阶段转换与入睡潜伏期（人 / 鼠）', fit: '整夜睡眠记录（人 / 鼠），或干预前后睡眠结构对比', tag: 'EEG+EOG+EMG', ver: 'v1.0', st: '已验证' },
+      { key: 'sleep-human', name: '标准睡眠分期评估 · 人', q: '人类睡眠结构：Wake/N1/N2/N3/REM 各期占比、阶段转换与入睡潜伏期（AASM）', fit: '整夜人类睡眠记录，或干预前后人类睡眠结构对比', tag: 'EEG+EOG+EMG', ver: 'v1.0', st: '已验证' },
+      { key: 'sleep-rat', name: '标准睡眠分期评估 · 鼠', q: '鼠类睡眠结构：Wake/NREM/REM 各期占比、阶段转换与入睡潜伏期', fit: '整夜鼠类睡眠记录，或干预前后鼠类睡眠结构对比', tag: 'EEG+EMG', ver: 'v1.0', st: '已验证' },
       { key: 'ecg', name: '基础心电检查', q: '心率时间序列：R 峰、RR 间期与平均心率', fit: '静息/任务态心电记录', tag: 'ECG', ver: 'v1.0', st: '已验证' },
       { key: 'hrv', name: 'HRV 综合评估', q: '心率变异性：时域/频域/非线性指标（自主神经调节）', fit: '静息或任务态心电，干预前后对照', tag: 'ECG', ver: 'v1.0', st: '已验证' },
       { key: 'epi', name: '癫痫筛查', q: '疑似痫样放电事件的筛查（阈值/ML 双方法，结果隔离）', fit: '长程脑电记录（辅助参考，不构成临床诊断）', tag: 'EEG', ver: 'v1.0', st: '已验证' },
-      { key: 'anx', name: '麻醉评估', q: '麻醉深度相关 EEG 指标（口径细化中）', fit: '麻醉监测记录（能力保留，参数待定）', tag: 'EEG', ver: 'v0.1', st: '口径细化中' },
+      { key: 'anx', name: '麻醉评估', q: '麻醉深度相关 EEG 指标', fit: '麻醉监测记录（能力保留，参数待定）', tag: 'EEG', ver: 'v0.1', st: '口径细化中' },
       { key: 'emg', name: '肌电活动评估', q: '肌电活动水平：振幅包络与活动段', fit: '肌电记录活动段评估', tag: 'EMG', ver: 'v1.0', st: '已验证' },
       { key: 'qeeg', name: 'QEEG 定量脑电', q: '脑电量化指标族', fit: '定量脑电研究；核心指标层随 V1，常模层随登录后项目管理', tag: 'EEG 19 导', ver: 'v1.0', st: '口径细化中' },
     ];
+    const visiblePresets = presets.filter((p) => isFull || p.key !== 'qeeg');
     return `
       <div class="page-head">
-        <div><h2>选择分析方式</h2><p class="desc">${isFull ? '项目分析：数据范围来自项目详情选择，选择方式后进入运行确认。' : '场景预置方案或自定义组合；QEEG 属项目分析（登录后可用）。不确定时可使用“帮我选分析”。'}</p></div>
+        <div>
+          <h2>预置方案</h2>
+          <p class="desc">${isFull ? '选择适用于当前项目数据的预置方案，确认后进入分析配置。' : '按研究目标选择分析路径。'}</p>
+        </div>
         <span class="cap-tag ${capTagClass()}">${capabilityText()}</span>
       </div>
-      ${quickSteps(3)}
-      ${isFull ? '<div class="notice info"><b>已选数据集合：</b>癫痫术前筛查 · 48 份 / 2 组（对照组 24 · 患者组 24）</div>' : '<div class="notice info"><b>QEEG 定量脑电（仅项目模式）：</b>需研究库受试者与 项目→被试→会话 三层管理，登录后从项目分析进入。</div>'}
-      <div class="grid-2" style="grid-template-columns:repeat(3,1fr)">
-        ${presets.filter((p) => isFull || p.key !== 'qeeg').map((p) => `
-          <div class="card" style="cursor:pointer;padding:10px 12px;${p.key === 'qeeg' ? 'grid-column:1 / -1;' : ''}" data-preset="${p.key}" title="点击卡片选择此方案；可先查看方法说明卡">
-            <h3>${p.name} <span class="badge ${p.st === '已验证' ? 'ok' : p.key === 'qeeg' ? 'blue' : 'warn'}">${p.st}</span></h3>
-            <p class="muted small" style="margin:0 0 8px"><b>研究问题：</b>${p.q} <span class="muted">· ${p.tag}</span></p>
-            <div class="btn-row" style="justify-content:flex-start;margin:6px 0 0"><button class="btn" style="padding:5px 10px" data-preset-doc="${p.key}" type="button">方法说明卡</button> <span class="small muted">点击卡片选择</span></div>
-          </div>`).join('')}
-      </div>
-      <div class="card">
-        <h3>自定义分析</h3>
-        <p class="muted small" style="margin:0 0 10px">按“信号处理 → 特征计算 → 输出”自由组合（V1 算子收敛），参数全程可控。</p>
-        <div class="btn-row" style="justify-content:flex-start;margin:0 0 10px">
-          <button class="btn" data-custom-tpl="rest" type="button">从模板起手：静息态频谱</button>
-          <button class="btn" data-custom-tpl="erp" type="button">从模板起手：单被试 ERP</button>
+      ${isFull
+        ? '<div class="notice info"><b>当前数据：</b>癫痫术前筛查 · 48 份 / 2 组（对照组 24 · 患者组 24）</div>'
+        : '<div class="notice info"><b>QEEG 定量脑电：</b>仅项目模式可用，需从项目分析进入。</div>'}
+      <section class="quick-choose-section" aria-label="预置方案列表">
+        <div class="quick-section-head">
+          <div>
+            <p class="muted small">公司预制，方法不可增删；点击卡片查看方法说明。</p>
+          </div>
         </div>
-        <button class="btn" id="btnQuickCustom" type="button">打开自定义分析 →</button>
-      </div>
-      <div class="card" style="padding:10px 14px;display:flex;align-items:center;gap:12px">
-        <div style="flex:1"><b>不知道怎么做？</b> <span class="muted small">回答三个问题，推荐适合你数据的模板（仅本机，不联网）。</span></div>
-        <button class="btn primary" id="btnQuickGuide" type="button">帮我选分析 →</button>
-      </div>
-      <div class="btn-row" style="justify-content:space-between">
-        <button class="btn" id="btnQuickPrevChoose" type="button">← 上一步：${isFull ? '项目详情' : '数据概览'}</button>
+        <div id="presetSection" class="grid-2 quick-preset-grid">
+          ${visiblePresets.map((p) => {
+            const selected = App.presetKey === p.key;
+            const statusClass = p.st === '已验证' ? 'ok' : 'warn';
+            return `
+              <div
+                class="card quick-preset-card${selected ? ' is-selected' : ''}"
+                data-preset="${p.key}"
+                role="button"
+                tabindex="0"
+                aria-pressed="${selected ? 'true' : 'false'}"
+                title="选择${p.name}"
+              >
+                <div class="quick-preset-head">
+                  <h3>${p.name}</h3>
+                  <span class="badge ${statusClass}">${p.st}</span>
+                </div>
+                <div class="quick-preset-meta" aria-label="方案信息">
+                  <span class="badge gray">${p.tag}</span>
+                  <span class="small muted">${p.ver}</span>
+                </div>
+                <p class="quick-preset-question">${p.q}</p>
+                <div class="btn-row quick-preset-actions">
+                  <button
+                    class="btn"
+                    data-preset-doc="${p.key}"
+                    type="button"
+                    aria-label="查看${p.name}的方法说明"
+                  >方法说明卡</button>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </section>
+      <section class="card quick-choice-card" id="customSection" aria-labelledby="customSectionTitle">
+        <div class="quick-choice-content">
+          <div>
+            <h3 id="customSectionTitle">自定义分析</h3>
+            <p class="muted small">按信号处理、特征计算和输出三个阶段组合方法与参数。</p>
+          </div>
+          <button class="btn" id="btnQuickCustom" type="button">打开自定义分析</button>
+        </div>
+        <div class="btn-row quick-template-row">
+          <span class="small muted">从模板开始</span>
+          <button class="btn" data-custom-tpl="rest" type="button">静息态频谱</button>
+          <button class="btn" data-custom-tpl="erp" type="button">单被试 ERP</button>
+        </div>
+      </section>
+      <section class="card quick-choice-card" id="guideSection" aria-labelledby="guideSectionTitle">
+        <div class="quick-choice-content">
+          <div>
+            <h3 id="guideSectionTitle">帮我选分析</h3>
+            <p class="muted small">根据数据采集方式、数据范围和分析目标推荐模板，仅在本机处理。</p>
+          </div>
+          <button class="btn" id="btnQuickGuide" type="button">开始推荐</button>
+        </div>
+      </section>
+      <div class="btn-row quick-page-actions">
+        <button class="btn" id="btnQuickPrevChoose" type="button">
+          ← 上一步：${isFull ? '项目详情' : '数据概览'}
+        </button>
+        <button
+          class="btn primary"
+          id="btnApplyPreset"
+          type="button"
+          ${App.presetKey ? '' : 'disabled'}
+        >应用预置方案</button>
       </div>
       ${boundaryNote()}`;
   }
+
 
   function quickCustomPage() {
     const pre = App.preVersions.length ? App.preVersions[App.preVersions.length - 1].id : '未应用';
@@ -2075,8 +2541,8 @@ function quickChoosePage() {
       <div class="card">
         <h3>受试者信息（QEEG 前置）</h3>
         ${App.workspaceMode === 'full'
-          ? '<div class="field"><span>受试者（来自研究库）</span><select class="select" id="qeegSubjectLib"><option>S03 · 患者组（默认）</option><option>S01 · 对照组</option><option>S02 · 对照组</option><option>S04 · 患者组</option></select></div><p class="small muted" style="margin:0">研究库优先；结果包记录信息快照与常模版本。</p>'
-          : '<div class="grid-2"><div class="field"><span>姓名 / 编号</span><input class="input" id="qeegTempName" value="临时受试者（本次分析）"></div><div class="field"><span>参考人群</span><select class="select" id="qeegTempNorm"><option>成人常模（待 Q-QEEG-04 定版）</option><option>儿童常模（待定）</option></select></div></div><p class="small muted" style="margin:0">快速模式临时填写，只对本次分析有效、不建库；结果包记录来源=临时填写。</p>'}
+          ? '<div class="field"><span>受试者（来自研究库）</span><select class="select" id="qeegSubjectLib"><option>S03 · 患者组（默认）</option><option>S01 · 对照组</option><option>S02 · 对照组</option><option>S04 · 患者组</option></select></div><p class="small muted" style="margin:0">结果包记录研究库信息快照和常模版本。</p>'
+          : '<div class="grid-2"><div class="field"><span>姓名 / 编号</span><input class="input" id="qeegTempName" value="临时受试者"></div><div class="field"><span>参考人群</span><select class="select" id="qeegTempNorm"><option>成人常模（待 Q-QEEG-04 定版）</option><option>儿童常模（待定）</option></select></div></div><p class="small muted" style="margin:0">快速模式信息仅对本次分析有效，不写入研究库；结果包将来源记为“临时填写”。</p>'}
       </div>` : '';
     const stages = [
       { step: '1 信号处理', group: '信号处理' },
@@ -2095,28 +2561,28 @@ function quickChoosePage() {
     }).join('');
     return `
       <div class="page-head">
-        <div><h2>${preset ? '预置方案 · ' + preset.name : '自定义分析'}</h2><p class="desc">${preset ? '公司预制固定流程，方法不可增删；可展开为自定义流水线。' : '三步流水线：信号处理 → 特征计算 → 输出；处理版本 ' + pre + ' 将随结果登记。'}</p></div>
+        <div><h2>${preset ? '预置方案 · ' + preset.name : '自定义分析'}</h2><p class="desc">${preset ? '流程和方法固定，不可增删；可复制为自定义流水线。' : '按阶段组合算子；参数可调，处理版本随结果保存。'}</p></div>
         <span class="cap-tag ${capTagClass()}">${capabilityText()}</span>
       </div>
       ${quickSteps(3)}
-      ${preset ? '<div class="card"><h3>方案摘要</h3>' + methodCardBody(preset) + '<div class="btn-row" style="justify-content:flex-start;margin-top:10px"><button class="btn" id="btnPresetExpand" type="button">展开为自定义流水线（复制起点）</button></div></div>' : ''}
+      ${preset ? '<div class="card"><h3>方案摘要</h3>' + methodCardBody(preset) + '<div class="btn-row" style="justify-content:flex-start;margin-top:10px"><button class="btn" id="btnPresetExpand" type="button">复制为自定义流水线</button></div></div>' : ''}
       <div class="card">
-        <h3>流水线配置 <span class="badge gray">${CUSTOM_V1.length} 个算子 · 3 阶段（V1 收敛）</span></h3>
-        ${preset ? '<div class="notice info" style="margin:0 0 10px">预置方案为固定流程，方法由公司预制；勾选已锁定，运行将按方案方法执行。</div>' : ''}
+        <h3>流水线配置 <span class="badge gray">${CUSTOM_V1.length} 个算子</span></h3>
+        ''
         ${preset ? presetLockedHtml : stageHtml}
-        <div class="field" style="margin-top:10px"><span>参数摘要</span><input class="input" id="quickParams" value="分析窗口 30 s · 重叠 50% · 陷波 50 Hz · 输出 CSV + PDF"></div>
+        <div class="field" style="margin-top:10px"><span>参数</span><input class="input" id="quickParams" value="分析窗口 30 s · 重叠 50% · 陷波 50 Hz · 输出 CSV + PDF"></div>
       </div>
 ${qeegSubjectCard}
       <div class="card">
         <div class="btn-row" style="justify-content:flex-start;margin-top:0">
-          <button class="btn primary" id="btnQuickRun" type="button">▶ ${preset ? '运行该方案' : '运行分析'}</button>
+          <button class="btn primary" id="btnQuickRun" type="button">${preset ? '运行该方案' : '运行分析'}</button>
           <button class="btn" id="btnQuickCancel" type="button" style="display:none">取消运行</button>
         </div>
         <div class="progress" id="quickRunProgress" style="display:none;margin-top:12px"><i style="width:0%"></i></div>
         <p class="small muted" id="quickRunText" style="display:none;margin:8px 0 0"></p>
       </div>
       <div class="btn-row" style="justify-content:space-between">
-        <button class="btn" id="btnQuickPrevCustom" type="button">← 上一步：选择分析方式</button>
+        <button class="btn" id="btnQuickPrevCustom" type="button">← 预置方案</button>
       </div>
       ${boundaryNote()}`;
   }
@@ -2162,7 +2628,7 @@ ${qeegSubjectCard}
         <div id="guideRec">${rec ? '<div class="notice info" style="margin-bottom:10px">' + rec.desc + '</div><button class="btn primary" id="btnGuideUse" type="button">使用这个模板 →</button>' : ''}</div>
       </div>
       <div class="btn-row" style="justify-content:space-between">
-        <button class="btn" id="btnQuickPrevGuide" type="button">← 上一步：选择分析方式</button>
+        <button class="btn" id="btnQuickPrevGuide" type="button">← 预置方案</button>
       </div>
       ${boundaryNote()}`;
   }
@@ -2380,7 +2846,7 @@ ${qeegSubjectCard}
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px">${methodHtml}</div>
         <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
           <button class="btn primary" id="btnQeegRun" type="button"${notReady || st.runStatus === 'running' || !isFull ? ' disabled' : ''}>运行 QEEG 指标（演示）</button>
-          <button class="btn" id="btnQeegBack" type="button">← 返回选择分析方式</button>
+          <button class="btn" id="btnQeegBack" type="button">← 返回预置方案</button>
         </div>
         ${runningNote}
       </div>
@@ -2594,7 +3060,7 @@ ${qeegSubjectCard}
     const seq = [
       { d: 400, fn: () => { toast('演示 1/5：数据概览与预处理'); navigate('q-overview'); } },
       { d: 1100, fn: () => { applyPreQuick(); toast('演示 2/5：已生成 ' + App.preVersions[App.preVersions.length - 1].id); } },
-      { d: 1100, fn: () => { App.quickMethod = ['psd', 'bands']; toast('演示 3/5：选择分析方式（静息态频谱分析）'); navigate('q-custom'); } },
+      { d: 1100, fn: () => { App.quickMethod = ['psd', 'bands']; toast('演示 3/5：预置方案（静息态频谱分析）'); navigate('q-custom'); } },
       { d: 1300, fn: () => { toast('演示 4/5：运行分析'); startQuickRun(['psd', 'bands'], true); } },
       { d: 700, fn: () => { toast('演示完成：结果已生成，可导出结果包'); } },
     ];
@@ -2603,7 +3069,7 @@ ${qeegSubjectCard}
   }
 
   function bindDynamic() {
-    document.querySelectorAll('.nav-btn[data-route]').forEach(b => b.addEventListener('click', () => navigate(b.dataset.route)));
+    document.querySelectorAll('.nav-btn[data-route]').forEach(b => b.addEventListener('click', () => navigate(b.dataset.route, { focus: b.dataset.focus })));
     const btnQuickFile = $('btnQuickFile');
     if (btnQuickFile) btnQuickFile.addEventListener('click', () => toast('已载入示例文件 sub-01_night1.edf（示例数据）'));
     const s1 = $('schemeStandard'), s2 = $('schemeMri');
@@ -2998,7 +3464,7 @@ ${qeegSubjectCard}
       st.eegCh = $('slpEeg') ? $('slpEeg').value : 'C3-M2';
       st.emgCh = $('slpEmg') ? $('slpEmg').value : 'Chin-EMG';
       st.epochLen = epVal;
-      st.species = $('slpSpecies') ? $('slpSpecies').value : 'human';
+      st.species = st.species || 'human';
       st.runStatus = 'running';
       st.progress = 0;
       st.configDirty = false;
@@ -3547,11 +4013,21 @@ ${qeegSubjectCard}
     });
     const bPrevChoose = $('btnQuickPrevChoose');
     if (bPrevChoose) bPrevChoose.addEventListener('click', () => navigate(App.workspaceMode === 'full' ? 'c-overview' : 'q-overview'));
-    // 选择分析方式：预置方案卡 / 自定义 / 引导
-    const PRESET_MODULE_ROUTE = { emg: 'q-emg', ecg: 'q-ecg', hrv: 'q-hrv', sleep: 'q-sleep', epi: 'q-epi', anx: 'q-anx', qeeg: 'c-qeeg' };
+    // 预置方案：预置方案卡 / 自定义 / 引导
+    const PRESET_MODULE_ROUTE = {
+  emg: 'q-emg',
+  ecg: 'q-ecg',
+  hrv: 'q-hrv',
+  'sleep-human': 'q-sleep',
+  'sleep-rat': 'q-sleep',
+  epi: 'q-epi',
+  anx: 'q-anx',
+  qeeg: 'c-qeeg'
+};
+
 
   const PRESET_METHODS = {
-      sleep: ['sleep'], ecg: ['rpeak', 'hr_mean'], hrv: ['rpeak', 'hrv_td', 'hrv_fd'], epi: ['thr_screen', 'ml_screen'], anx: ['anx_depth_demo'], emg: ['emg_act'], qeeg: ['psd', 'bands', 'tbr', 'zscore'], rest: ['psd', 'bands'], erp: ['erp', 'reject'],
+      sleep: ['sleep'], 'sleep-human': ['sleep'], 'sleep-rat': ['sleep'], ecg: ['rpeak', 'hr_mean'], hrv: ['rpeak', 'hrv_td', 'hrv_fd'], epi: ['thr_screen', 'ml_screen'], anx: ['anx_depth_demo'], emg: ['emg_act'], qeeg: ['psd', 'bands', 'tbr', 'zscore'], rest: ['psd', 'bands'], erp: ['erp', 'reject'],
     };
     let mcKey = null;
     function methodCardBody(d) {
@@ -3571,6 +4047,11 @@ ${qeegSubjectCard}
     });
     document.querySelectorAll('[data-preset-doc]').forEach((b) => {
       b.addEventListener('click', (e) => { e.stopPropagation(); openMethodCard(b.getAttribute('data-preset-doc')); });
+    });
+    const bApplyPreset = $('btnApplyPreset');
+    if (bApplyPreset) bApplyPreset.addEventListener('click', () => {
+      if (!App.presetKey) { toast('请先在方法说明卡中选择预置方案'); return; }
+      navigate(PRESET_MODULE_ROUTE[App.presetKey] || 'q-custom');
     });
     document.querySelectorAll('[data-custom-tpl]').forEach((b) => {
       b.addEventListener('click', () => {
@@ -3676,7 +4157,7 @@ ${qeegSubjectCard}
     if (btnPresetExpand) btnPresetExpand.addEventListener('click', () => {
       App.presetKey = null;
       render();
-      toast('已展开为自定义流水线（复制起点），责任转为用户组合');
+      toast('已复制为自定义流水线，责任转为用户组合');
     });
     const btnGuideUse = $('btnGuideUse');
     if (btnGuideUse) btnGuideUse.addEventListener('click', () => {
@@ -3782,7 +4263,7 @@ ${qeegSubjectCard}
   }
 
   /* ============ 导航与入口 ============ */
-  function navigate(routeId) {
+  function navigate(routeId, opts = {}) {
     const r = ROUTES[routeId];
     if (!r) return;
     const v = validateState();
@@ -3798,6 +4279,16 @@ ${qeegSubjectCard}
     if (routeId === 'q-hrv') App.ecgHrv.mode = 'hrv';
     try { history.replaceState(null, '', '#' + routeId); } catch (e) { /* 忽略 history 限制 */ }
     render();
+    if (opts.focus) {
+      const map = { preset: 'presetSection', custom: 'customSection', guide: 'guideSection' };
+      const el = document.getElementById(map[opts.focus]);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const prev = el.style.outline;
+        el.style.outline = '2px solid #3b82f6';
+        setTimeout(() => { el.style.outline = prev; }, 1800);
+      }
+    }
   }
 
   function exitToLaunch() {
