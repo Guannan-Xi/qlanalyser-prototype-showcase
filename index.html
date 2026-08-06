@@ -185,6 +185,7 @@
   .card + .card { margin-top: 10px; }
   .card h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pre-group { margin: 12px 0 6px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--muted); }
   .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
   @media (max-width: 900px) { .grid-2, .grid-4, .entry-grid { grid-template-columns: 1fr; } }
   .muted { color: var(--muted); }
@@ -2347,10 +2348,10 @@
     const latest = pre.length ? pre[pre.length - 1] : null;
     const lastLog = logs.length ? logs[logs.length - 1] : null;
     const histSummary = latest
-      ? '当前 ' + latest.id + ' · ' + logs.length + ' 条记录' + (lastLog ? ' · 最近 ' + lastLog.time + ' ' + lastLog.action : '')
-      : '无版本 · ' + logs.length + ' 条记录 · 暂无操作';
+      ? '当前 ' + latest.id + (lastLog ? ' · 最近 ' + lastLog.time + ' ' + lastLog.action : '')
+      : '无版本' + (lastLog ? ' · 最近 ' + lastLog.time + ' ' + lastLog.action : ' · 暂无操作');
     return `
-      <div class="card">
+      <div class="card" style="padding:16px 18px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <h3 style="margin:0">预处理（共享）</h3>
           <span class="badge gray">${latest ? latest.id : '原始'}</span>
@@ -2362,23 +2363,29 @@
             <option value="rest">静息态标准预处理（v1.0）</option>
           </select>
         </div>
-        <div class="notice info" style="margin:8px 0 0">当前为预置参数（0.5/70/50 等），最终参数以 D-02 定版为准；每次应用会记录参数版本。</div>
+        <p class="muted small" style="margin:6px 0 0">预置参数（0.5/70/50 等）以 D-02 定版为准，应用后自动记录参数版本。</p>
+        <h4 class="pre-group">工作区间</h4>
         <div class="grid-2">
           <div class="field"><span>工作区间开始</span><input class="input" id="preStart" value="00:00:00"></div>
           <div class="field"><span>工作区间结束</span><input class="input" id="preEnd" value="06:12:00"></div>
+        </div>
+        <h4 class="pre-group">滤波</h4>
+        <div class="grid-2" style="grid-template-columns:repeat(3,1fr)">
           <div class="field"><span>高通（Hz）</span><select class="select" id="preHp"><option>0.5 Hz</option><option>0.1 Hz</option><option>关闭</option></select></div>
           <div class="field"><span>低通（Hz）</span><select class="select" id="preLp"><option>70 Hz</option><option>45 Hz</option><option>关闭</option></select></div>
           <div class="field"><span>陷波</span><select class="select" id="preNotch"><option>50 Hz</option><option>60 Hz</option><option>关闭</option></select></div>
-          <div class="field"><span>坏段检测阈值（μV）</span><input class="input" id="preBadArt" type="number" value="200"></div>
-          <div class="field" style="grid-column:1 / -1"><span>伪迹剔除阈值（μV）</span><input class="input" id="preArt" type="number" value="200"></div>
         </div>
-        <div class="notice info" id="preApplyNote" style="margin:8px 0 0">将应用：HP 0.5 / LP 70 / 陷波 50 / 区间 00:00:00–06:12:00 · 坏段 0 段（应用后波形更新为新版本，原版本保留）</div>
+        <h4 class="pre-group">伪迹阈值</h4>
+        <div class="grid-2">
+          <div class="field"><span>坏段检测阈值（μV）</span><input class="input" id="preBadArt" type="number" value="200"></div>
+          <div class="field"><span>伪迹剔除阈值（μV）</span><input class="input" id="preArt" type="number" value="200"></div>
+        </div>
+        <div class="muted small" id="preApplyNote" style="margin:8px 0 0">将应用：HP 0.5 / LP 70 / 陷波 50 / 区间 00:00:00–06:12:00 · 坏段 0 段（应用后波形更新为新版本，原版本保留）</div>
         <div class="btn-row" style="justify-content:space-between;align-items:center;margin-top:10px">
           <button class="btn primary" id="btnPreApply" type="button">应用预处理（生成新版本）</button>
           <span class="muted small">导出绑定当前参数快照</span>
-          <button class="btn" id="btnPreExport" type="button">导出处理后数据 →</button>
+          <button class="btn-link" id="btnPreExport" type="button" style="font-size:13px">导出处理后数据 →</button>
         </div>
-        ${App.preDirty ? '<div class="notice warn" style="margin:8px 0 0"><b>有未应用更改：</b>参数或坏段已修改，应用后将生成新处理版本（原版本保留）。</div>' : ''}
         <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
           <div id="preHistoryToggle" role="button" tabindex="0" style="display:flex;align-items:center;gap:8px;cursor:pointer">
             <span class="small" style="font-weight:600;color:var(--muted)">留痕</span>
@@ -2400,7 +2407,6 @@
     const qf = App.quickFile;
     const d = DEMO.quick;
     const pre = App.preVersions || [];
-    const verBadge = pre.length ? pre[pre.length - 1].id : '原始';
     const allCh = v1DemoChannels();
     const showAll = !!App.overviewAllCh;
     const waveCh = showAll ? allCh : allCh.slice(0, 6);
@@ -2408,10 +2414,9 @@
     return `
       <div class="page-head">
         <div><h2>数据概览与预处理</h2><p class="desc">确认文件信息，配置共享预处理并生成处理版本。</p></div>
-        <span class="cap-tag ${capTagClass()}">${capabilityText()}</span>
       </div>
       ${quickSteps(2)}
-      <div class="card">
+      <div class="card" style="padding:16px 18px">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:14px;font-weight:600;color:#284880">${qf ? qf.name : d.file}</span>
           <span class="badge gray">${d.dur}</span>
@@ -2421,8 +2426,7 @@
           <span style="flex:1"></span>
           <button class="btn" id="btnDataInfo2" type="button">数据信息</button>
         </div>
-        <div style="position:relative;margin-top:10px;max-height:300px;overflow:auto">
-          <span class="badge gray" style="position:absolute;top:8px;right:10px;z-index:2">当前版本：${verBadge}</span>
+        <div style="position:relative;margin-top:12px;max-height:340px;overflow:auto">
           ${v1WaveSvgHtml({ channels: waveCh, events: v1DemoEvents(), badSegs: App.badSegs || [] })}
         </div>
         <div style="text-align:right;margin-top:6px">
@@ -3233,7 +3237,10 @@ ${qeegSubjectCard}
       const start = $('preStart') ? $('preStart').value : '00:00:00';
       const end = $('preEnd') ? $('preEnd').value : '06:12:00';
       const badN = (App.badSegs || []).length;
-      el.innerHTML = '<b>将应用：</b>HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' / 区间 ' + start + '–' + end + ' · 坏段 ' + (badN ? badN + ' 段' : '0 段') + '（应用后波形更新为新版本，原版本保留）';
+      const dirty = !!(App.preDirty || badN);
+      el.className = dirty ? 'small pre-note-warn' : 'muted small';
+      el.style.cssText = 'margin:8px 0 0;' + (dirty ? 'padding:6px 9px;background:#fff7e6;border:1px solid #e8c36a;border-radius:6px;color:#7a6218' : '');
+      el.innerHTML = (dirty ? '<b>有未应用更改 · </b>' : '将应用：') + 'HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' / 区间 ' + start + '–' + end + ' · 坏段 ' + (badN ? badN + ' 段' : '0 段') + '（应用后波形更新为新版本，原版本保留）';
     };
     const preTpl = $('preTpl');
     if (preTpl) preTpl.addEventListener('change', () => {
