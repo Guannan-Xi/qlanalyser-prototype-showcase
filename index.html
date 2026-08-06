@@ -2343,17 +2343,26 @@
   function prePanelHtml() {
     const pre = App.preVersions || [];
     const preRows = pre.map((v) => `<tr><td>${v.id}</td><td>${v.tpl}</td><td>${v.summary}</td><td>${v.appliedAt}</td></tr>`).join('');
+    const logs = App.preLog || [];
+    const latest = pre.length ? pre[pre.length - 1] : null;
+    const lastLog = logs.length ? logs[logs.length - 1] : null;
+    const histSummary = latest
+      ? '当前 ' + latest.id + ' · ' + logs.length + ' 条记录' + (lastLog ? ' · 最近 ' + lastLog.time + ' ' + lastLog.action : '')
+      : '无版本 · ' + logs.length + ' 条记录 · 暂无操作';
     return `
       <div class="card">
-        <h3>预处理（共享）</h3>
-        <div class="field"><span>预处理模板</span>
-          <select class="select" id="preTpl">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <h3 style="margin:0">预处理（共享）</h3>
+          <span class="badge gray">${latest ? latest.id : '原始'}</span>
+          <span style="flex:1"></span>
+          <span class="muted small">模板</span>
+          <select class="select" id="preTpl" style="width:auto;min-width:190px">
             <option value="">手动配置（默认）</option>
             <option value="erp" title="事件相关电位（ERP）：适用于事件锁时分析，保留低频成分">ERP 标准预处理（v1.0）</option>
             <option value="rest">静息态标准预处理（v1.0）</option>
           </select>
         </div>
-        <div class="notice info" style="margin:0 0 8px">当前为预置参数（0.5/70/50 等），最终参数以 D-02 定版为准；每次应用会记录参数版本。</div>
+        <div class="notice info" style="margin:8px 0 0">当前为预置参数（0.5/70/50 等），最终参数以 D-02 定版为准；每次应用会记录参数版本。</div>
         <div class="grid-2">
           <div class="field"><span>工作区间开始</span><input class="input" id="preStart" value="00:00:00"></div>
           <div class="field"><span>工作区间结束</span><input class="input" id="preEnd" value="06:12:00"></div>
@@ -2363,16 +2372,39 @@
           <div class="field"><span>坏段检测阈值（μV）</span><input class="input" id="preBadArt" type="number" value="200"></div>
           <div class="field" style="grid-column:1 / -1"><span>伪迹剔除阈值（μV）</span><input class="input" id="preArt" type="number" value="200"></div>
         </div>
-        <div style="margin-top:10px;padding:10px;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px"><h4 style="margin:0 0 6px">坏段标记（作用于全部通道）</h4><div class="muted small" style="margin-bottom:6px">点击或拖拽下方时间条标记坏段；标红=待剔除。应用=写入新 Preprocess-N 版本（演示语义=排除，口径待 D-08 定版）。</div><div id="badSegStrip" style="display:flex;gap:2px;height:26px;margin-bottom:8px"></div><div class="muted small" id="badSegStatus">尚未标记坏段。</div><div id="badSegList" style="margin-top:6px"></div><div class="btn-row" style="justify-content:flex-start;margin:8px 0 0"><button class="btn" id="btnBadUndo" type="button">撤销</button><button class="btn" id="btnBadRedo" type="button">重做</button><button class="btn" id="btnBadClear" type="button">清空标记</button></div></div><div class="btn-row" style="justify-content:flex-start;margin-top:10px"><button class="btn primary" id="btnPreApply" type="button">应用预处理（生成新版本）</button><button class="btn" id="btnPreExport" type="button">导出处理后数据 →</button></div>
-        ${App.preDirty ? '<div class="notice warn" style="margin:10px 0 0"><b>有未应用更改：</b>参数或坏段已修改，应用后将生成新处理版本（原版本保留）。</div>' : ''}
-        ${pre.length ? '<h4 style="margin:10px 0 6px">处理版本链</h4><table class="table"><thead><tr><th>版本</th><th>模板</th><th>参数摘要</th><th>应用时间</th></tr></thead><tbody>' + preRows + '</tbody></table>' : ''}
-        <h4 style="margin:12px 0 6px">处理记录</h4><div class="muted small" style="margin-bottom:6px">记录每一次区间/滤波/坏段操作，便于复核与追溯。</div><div id="preLogBox">${(App.preLog || []).length ? '<table class="table"><thead><tr><th>时间</th><th>操作</th><th>参数摘要</th><th>生成版本</th></tr></thead><tbody>' + (App.preLog || []).map(function (l) { return '<tr><td>' + l.time + '</td><td>' + l.action + '</td><td class="small muted">' + l.summary + '</td><td>' + (l.version || '—') + '</td></tr>'; }).join('') + '</tbody></table>' : '<div class="muted small">暂无处理记录；应用预处理后在此留痕。</div>'}</div>
+        <div class="notice info" id="preApplyNote" style="margin:8px 0 0">将应用：HP 0.5 / LP 70 / 陷波 50 / 区间 00:00:00–06:12:00 · 坏段 0 段（应用后波形更新为新版本，原版本保留）</div>
+        <div class="btn-row" style="justify-content:space-between;align-items:center;margin-top:10px">
+          <button class="btn primary" id="btnPreApply" type="button">应用预处理（生成新版本）</button>
+          <span class="muted small">导出绑定当前参数快照</span>
+          <button class="btn" id="btnPreExport" type="button">导出处理后数据 →</button>
+        </div>
+        ${App.preDirty ? '<div class="notice warn" style="margin:8px 0 0"><b>有未应用更改：</b>参数或坏段已修改，应用后将生成新处理版本（原版本保留）。</div>' : ''}
+        <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+          <div id="preHistoryToggle" role="button" tabindex="0" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <span class="small" style="font-weight:600;color:var(--muted)">留痕</span>
+            <span class="small muted" id="preHistorySummary">${histSummary}</span>
+            <span style="flex:1"></span>
+            <span class="small muted" id="preHistoryArrow">展开 ▾</span>
+          </div>
+          <div id="preHistoryBody" hidden style="margin-top:8px">
+            <h4 style="margin:8px 0 6px">处理版本链</h4>
+            ${pre.length ? '<table class="table"><thead><tr><th>版本</th><th>模板</th><th>参数摘要</th><th>应用时间</th></tr></thead><tbody>' + preRows + '</tbody></table>' : '<div class="muted small">暂无处理版本；应用预处理后在此留痕。</div>'}
+            <h4 style="margin:10px 0 6px">处理记录</h4>
+            ${logs.length ? '<table class="table"><thead><tr><th>时间</th><th>操作</th><th>参数摘要</th><th>生成版本</th></tr></thead><tbody>' + logs.map(function (l) { return '<tr><td>' + l.time + '</td><td>' + l.action + '</td><td class="small muted">' + l.summary + '</td><td>' + (l.version || '—') + '</td></tr>'; }).join('') + '</tbody></table>' : '<div class="muted small">暂无处理记录；应用预处理后在此留痕。</div>'}
+          </div>
+        </div>
       </div>`;
   }
 
   function quickOverviewPage() {
     const qf = App.quickFile;
     const d = DEMO.quick;
+    const pre = App.preVersions || [];
+    const verBadge = pre.length ? pre[pre.length - 1].id : '原始';
+    const allCh = v1DemoChannels();
+    const showAll = !!App.overviewAllCh;
+    const waveCh = showAll ? allCh : allCh.slice(0, 6);
+    const qcOk = !!(App.importState && App.importState.ok);
     return `
       <div class="page-head">
         <div><h2>数据概览与预处理</h2><p class="desc">确认文件信息，配置共享预处理并生成处理版本。</p></div>
@@ -2380,15 +2412,36 @@
       </div>
       ${quickSteps(2)}
       <div class="card">
-        <h3>文件信息</h3>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:14px;font-weight:600;color:#284880">${qf ? qf.name : d.file}</span>
-          <span class="muted small">${qf ? qf.sizeText : d.size}</span>
+          <span class="badge gray">${d.dur}</span>
+          <span class="badge gray">${d.ch}</span>
+          <span class="badge gray">${d.rate}</span>
+          <span class="badge ${qcOk ? 'ok' : 'warn'}">${qcOk ? '校验通过' : '待校验'}</span>
           <span style="flex:1"></span>
           <button class="btn" id="btnDataInfo2" type="button">数据信息</button>
         </div>
-        <div style="margin-top:0">${v1WaveSvgHtml({ channels: v1DemoChannels(), events: v1DemoEvents(), badSegs: App.badSegs || [] })}</div>
+        <div style="position:relative;margin-top:10px;max-height:300px;overflow:auto">
+          <span class="badge gray" style="position:absolute;top:8px;right:10px;z-index:2">当前版本：${verBadge}</span>
+          ${v1WaveSvgHtml({ channels: waveCh, events: v1DemoEvents(), badSegs: App.badSegs || [] })}
+        </div>
+        <div style="text-align:right;margin-top:6px">
+          <button class="btn" id="btnWaveToggle" type="button" style="padding:4px 10px;font-size:12px">${showAll ? '收起通道（前 6）' : '展开全部通道（' + allCh.length + '）'}</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+          <span class="muted small" style="width:66px;flex:none">坏段标记</span>
+          <div id="badSegStrip" style="display:flex;gap:2px;height:18px;flex:1;margin-left:8px"></div>
+          <span class="muted small" id="badSegStatus" style="white-space:nowrap">尚未标记坏段。</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <button class="btn-link" id="btnBadUndo" type="button" disabled>撤销</button>
+          <button class="btn-link" id="btnBadRedo" type="button" disabled>重做</button>
+          <button class="btn-link" id="btnBadClear" type="button" disabled>清空标记</button>
+          <span class="muted small" style="margin-left:66px">点击或拖拽时间条标记坏段；标红=待剔除，与波形时间轴对齐。</span>
+        </div>
+        <div id="badSegList" style="margin-top:6px"></div>
       </div>
+      ${prePanelHtml()}
       <div class="overlay" id="dataInfoOverlay2" hidden>
         <div class="modal">
           <h3>数据信息</h3>
@@ -2401,7 +2454,6 @@
           <div class="btn-row" style="justify-content:flex-end"><button class="btn" id="btnDataInfoClose2" type="button">关闭</button></div>
         </div>
       </div>
-      ${prePanelHtml()}
       <div class="btn-row" style="justify-content:space-between">
         <button class="btn" id="btnQuickPrevOverview" type="button">← 上一步：导入文件</button>
         <button class="btn primary" id="btnQuickNextChoose" type="button">下一步：预置方案 →</button>
@@ -3172,17 +3224,29 @@ ${qeegSubjectCard}
       toast('已批量导入并归档 ' + App.batchFiles.length + ' 个文件（校验：通过 ' + App.batchFiles.filter((f) => f.status === '通过').length + ' / 待检查 ' + App.batchFiles.filter((f) => f.status !== '通过').length + '）');
     });
     // 阶段 5：预处理模板与版本
+    const updatePreApplyNote = () => {
+      const el = $('preApplyNote');
+      if (!el) return;
+      const hp = $('preHp') ? $('preHp').value : '关闭';
+      const lp = $('preLp') ? $('preLp').value : '关闭';
+      const notch = $('preNotch') ? $('preNotch').value : '关闭';
+      const start = $('preStart') ? $('preStart').value : '00:00:00';
+      const end = $('preEnd') ? $('preEnd').value : '06:12:00';
+      const badN = (App.badSegs || []).length;
+      el.innerHTML = '<b>将应用：</b>HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' / 区间 ' + start + '–' + end + ' · 坏段 ' + (badN ? badN + ' 段' : '0 段') + '（应用后波形更新为新版本，原版本保留）';
+    };
     const preTpl = $('preTpl');
     if (preTpl) preTpl.addEventListener('change', () => {
       const t = preTpl.value === 'erp' ? { hp: '0.1 Hz', lp: '45 Hz', notch: '50 Hz', bad: '150', art: '150' }
         : preTpl.value === 'rest' ? { hp: '0.5 Hz', lp: '70 Hz', notch: '50 Hz', bad: '200', art: '200' } : null;
-      if (!t) { toast('已切换为手动配置'); return; }
+      if (!t) { toast('已切换为手动配置'); updatePreApplyNote(); return; }
       if ($('preHp')) $('preHp').value = t.hp;
       if ($('preLp')) $('preLp').value = t.lp;
       if ($('preNotch')) $('preNotch').value = t.notch;
       if ($('preBadArt')) $('preBadArt').value = t.bad;
       if ($('preArt')) $('preArt').value = t.art;
       toast('已加载模板：' + (preTpl.value === 'erp' ? 'ERP 标准预处理' : '静息态标准预处理') + '（v1.0，可继续手动调整）');
+      updatePreApplyNote();
     });
     const btnPreApply = $('btnPreApply');
     if (btnPreApply) btnPreApply.addEventListener('click', () => {
@@ -3231,6 +3295,7 @@ ${qeegSubjectCard}
       if (u) u.disabled = !(App.preUndo || []).length;
       if (r) r.disabled = !(App.preRedo || []).length;
       if (c) c.disabled = !(App.badSegs || []).length;
+      updatePreApplyNote();
     };
     const pushBadState = () => {
       App.preUndo.push(JSON.parse(JSON.stringify(App.badSegs || [])));
@@ -3279,6 +3344,19 @@ ${qeegSubjectCard}
       badStrip.addEventListener('pointerleave', () => { dragging = false; });
       renderBadSegs();
     }
+    const btnWaveToggle = $('btnWaveToggle');
+    if (btnWaveToggle) btnWaveToggle.addEventListener('click', () => {
+      App.overviewAllCh = !App.overviewAllCh;
+      render();
+    });
+    const preHistoryToggle = $('preHistoryToggle');
+    if (preHistoryToggle) preHistoryToggle.addEventListener('click', () => {
+      const body = $('preHistoryBody'), arrow = $('preHistoryArrow');
+      if (!body) return;
+      const open = body.hidden;
+      body.hidden = !open;
+      if (arrow) arrow.textContent = open ? '收起 ▴' : '展开 ▾';
+    });
     document.querySelectorAll('[data-bad-del]').forEach((b) => b.addEventListener('click', function () {
       const i = Number(this.getAttribute('data-bad-del'));
       pushBadState();
@@ -3314,7 +3392,7 @@ ${qeegSubjectCard}
     });
     ['preHp', 'preLp', 'preNotch', 'preBadArt', 'preArt', 'preStart', 'preEnd'].forEach((id) => {
       const el = $(id);
-      if (el) el.addEventListener('change', () => { if ((App.preVersions || []).length) App.preDirty = true; });
+      if (el) el.addEventListener('change', () => { if ((App.preVersions || []).length) App.preDirty = true; updatePreApplyNote(); });
     });
     // 批次②：EMG 模块
     const emgStart = $('btnEmgStart');
