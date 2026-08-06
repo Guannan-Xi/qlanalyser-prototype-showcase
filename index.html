@@ -60,11 +60,13 @@
 
 
   .entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; width: min(920px, 100%); }
+  .entry-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(1180px, 100%); }
   .entry-card { position: relative; display: flex; flex-direction: column; background: #fff; color: var(--ink); border: 1px solid var(--border); border-radius: 14px; padding: 24px; cursor: pointer; box-shadow: 0 12px 32px rgba(8,20,40,.22); transition: transform .15s, box-shadow .15s, border-color .15s, opacity .15s; }
   .entry-card:hover:not(.disabled) { border-color: var(--primary); box-shadow: 0 16px 40px rgba(8,20,40,.28); transform: translateY(-3px); }
   .entry-card.disabled { opacity: .5; cursor: not-allowed; }
   .entry-card .tag { position: absolute; top: 12px; right: 12px; padding: 3px 8px; border-radius: 999px; font-size: 11px; background: var(--primary-soft); color: var(--primary); }
   .entry-card .tag.amber { background: var(--amber-soft); color: var(--amber); }
+  .entry-card .tag.ok { background: #e8f7ef; color: #0f9d76; }
   .entry-icon { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg, #80acd8, #284880); color: #fff; margin-bottom: 14px; box-shadow: 0 3px 8px rgba(40,72,128,.22); }
   .entry-card h3 { margin: 0 0 8px; font-size: 18px; }
   .entry-card p { margin: 0 0 18px; color: var(--subtle); font-size: 13px; line-height: 1.7; flex: 1; }
@@ -487,28 +489,41 @@
       <p class="sub">专业、可靠、简单易用，从数据检查到结果导出，一站完成。</p>
     </div>
 
-    <div class="entry-grid">
+    <div class="entry-grid entry-grid-3">
       <div class="entry-card" id="entryQuick">
-        <span class="tag" id="quickTag">本地 · 无登录</span>
+        <span class="tag ok" id="quickTag">V1 · 本地可用</span>
         <div class="entry-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
         </div>
-        <h3>快速分析</h3>
-        <p>无需登录，打开数据文件即可开始；适合预实验、方法验证与临时数据查看。</p>
+        <h3>脑电与生理信号分析</h3>
+        <p>以脑电为主，覆盖睡眠、心电、HRV、肌电、癫痫、麻醉与 QEEG；支持快速分析（本地单文件）与项目分析（研究项目）两种模式。</p>
         <div class="entry-actions">
-          <button class="btn primary" id="btnQuickStart" type="button">开始分析 →</button>
+          <button class="btn primary" id="btnQuickStart" type="button">开始快速分析 →</button>
+          <button class="btn" id="btnFullStart" type="button">项目分析 →</button>
           <button class="entry-link" id="btnQuickDemo" type="button">演示模式：自动走完流程</button>
         </div>
+        <p class="sub" id="fullDesc" style="margin:10px 0 0;font-size:12px;color:var(--subtle)">项目分析登录后启用：按 项目 → 受试者 → 数据 组织研究数据。</p>
       </div>
-      <div class="entry-card" id="entryFull">
-        <span class="tag amber" id="fullTag">登录后启用</span>
+      <div class="entry-card" id="entrySim">
+        <span class="tag amber">V2 · 规划中</span>
         <div class="entry-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16h5"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg>
         </div>
-        <h3>项目分析</h3>
-        <p id="fullDesc">按 项目 → 受试者 → 数据 组织研究数据，登录后启用。</p>
+        <h3>建模与仿真</h3>
+        <p>脑刺激电场 FEM 仿真：任务配置 → 刺激建模 → 求解 → 剂量 → 三维可视化 → 报告；独立流程，规划在 V2 提供。</p>
         <div class="entry-actions">
-          <button class="btn primary" id="btnFullStart" type="button">进入项目分析 →</button>
+          <button class="btn" id="btnSimStart" type="button">查看仿真工作台 →</button>
+        </div>
+      </div>
+      <div class="entry-card" id="entrySpike">
+        <span class="tag amber">V3 · 规划中</span>
+        <div class="entry-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>
+        </div>
+        <h3>单元放电分析（Spike）</h3>
+        <p>单细胞/多单元放电：聚类 → 质量门控 → 放电统计 → 事件锁定（PSTH）；接入 ECoG/SEEG，规划在 V3 提供。</p>
+        <div class="entry-actions">
+          <button class="btn" id="btnSpikeStart" type="button">查看 Spike 工作台 →</button>
         </div>
       </div>
     </div>
@@ -723,10 +738,10 @@
   const ROUTES = {
     'q-home':     { label: '导入与检查',           role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickHome' },
     'q-overview': { label: '数据概览与预处理',   role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickOverview' },
-    'q-choose':   { label: '预置方案',       role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickChoose' },
+    'q-choose':   { label: '配置分析方案',       role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickChoose' },
     'q-custom':   { label: '自定义分析',         role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickCustom' },
     'q-guide':    { label: '帮我选分析',         role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickGuide' },
-    'q-result':   { label: '运行与结果',         role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickResult' },
+    'q-result':   { label: '结果复核与导出',         role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickResult' },
     'q-review':   { label: '结果复核',           role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'sleepReview' },
     'q-emg':      { label: '肌电活动评估',       role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'emgWorkbench' },
     'q-ecg':      { label: '基础心电检查',       role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'ecgHrvWorkbench' },
@@ -742,24 +757,27 @@
     'c-qeeg':     { label: 'QEEG 工作台',         role: 'customer', workspaceMode: 'full',  featureFlag: 'qeeg',  kind: 'qeegWorkbench' },
     'c-project':  { label: '项目详情',           role: 'customer', workspaceMode: 'full',  featureFlag: 'core',  kind: 'projectDetail' },
     'c-profile':  { label: '个人中心',           role: 'customer', workspaceMode: 'full',  featureFlag: 'core',  kind: 'skeleton' },
-    'c-sim':      { label: '仿真',               role: 'customer', workspaceMode: 'full',  featureFlag: 'sim',   kind: 'sim' },
-    'c-spike':    { label: 'Spike',              role: 'customer', workspaceMode: 'full',  featureFlag: 'spike', kind: 'spike' }
+    'c-sim':      { label: '建模与仿真',          role: 'customer', workspaceMode: 'full',  featureFlag: 'sim',   kind: 'sim' },
+    'c-spike':    { label: '单元放电分析（Spike）', role: 'customer', workspaceMode: 'full',  featureFlag: 'spike', kind: 'spike' }
   };
 
   const NAV = {
     quick:    {
       group: '快速分析',
       items: ['q-home', 'q-overview', {
-        label: '预置方案',
+        label: '配置分析方案',
         route: 'q-choose',
         children: [
-          { route: 'q-choose', label: '方案列表', focus: 'preset' },
+          { route: 'q-choose', label: '预置分析方案', focus: 'preset' },
           { route: 'q-custom', label: '自定义分析' },
           { route: 'q-guide', label: '帮我选分析' }
         ]
       }, 'q-result']
     },
-    customer: { group: '项目管理',     items: ['c-overview', 'c-data', 'c-workflow', 'c-results', 'c-qeeg', 'c-profile', 'c-sim', 'c-spike'] }
+    customer: { group: '项目管理',     items: ['c-overview', 'c-data', 'c-workflow', 'c-results'] },
+    more:     { group: '更多',         items: ['c-profile'] },
+    sim:      { group: '建模与仿真',    items: ['c-sim'] },
+    spike:    { group: '单元放电分析',  items: ['c-spike'] }
   };
 
   const HOME_BY_ROLE = { customer: 'c-overview' };
@@ -854,10 +872,9 @@
   }
 
   function renderLaunch() {
-    $('quickTag').textContent = '本地 · 无登录';
-    $('fullTag').textContent = App.loggedIn ? '已登录 · 科研账户' : '登录后启用';
+    $('quickTag').textContent = 'V1 · 本地可用';
     const fullDesc = $('fullDesc');
-    if (fullDesc) fullDesc.textContent = '按 项目 → 受试者 → 数据 组织研究数据，登录后启用。';
+    if (fullDesc) fullDesc.textContent = App.loggedIn ? '项目分析已启用：按 项目 → 受试者 → 数据 组织研究数据。' : '项目分析登录后启用：按 项目 → 受试者 → 数据 组织研究数据。';
     const demoBtn = $('btnQuickDemo');
     if (demoBtn) demoBtn.disabled = false;
     const cover = $('coverAccount');
@@ -870,8 +887,13 @@
     const groups = [];
     if (App.workspaceMode === 'quick') {
       groups.push(NAV.quick);
+    } else if (App.activeRoute === 'c-sim') {
+      groups.push(NAV.sim);
+    } else if (App.activeRoute === 'c-spike') {
+      groups.push(NAV.spike);
     } else {
-    groups.push(NAV[App.currentRole] || NAV.customer);
+      groups.push(NAV[App.currentRole] || NAV.customer);
+      groups.push(NAV.more);
     }
     navGroups.innerHTML = groups.map(g => `
       <div class="nav-label">${g.group}</div>
@@ -890,7 +912,10 @@
           return `<button class="nav-btn ${isParentActive ? 'active' : ''}" data-route="${item.route}" type="button">${item.label}</button>${subs}`;
         }).join('')}
       </nav>`).join('');
-    $('roleSubtitle').textContent = App.workspaceMode === 'quick' ? '快速分析工作区' : roleLabel() + ' · 项目分析';
+    $('roleSubtitle').textContent = App.workspaceMode === 'quick' ? '快速分析工作区'
+      : App.activeRoute === 'c-sim' ? '建模与仿真 · V2 规划中'
+      : App.activeRoute === 'c-spike' ? '单元放电分析 · V3 规划中'
+      : roleLabel() + ' · 项目分析';
     if (App.workspaceMode === 'quick') {
       $('footRole').textContent = '本地临时工作区';
       $('footName').textContent = '未登录';
@@ -1109,7 +1134,7 @@
   }
 
   function quickSteps(cur) {
-    const names = ['导入与检查', '数据概览', '预置方案', '运行与结果'];
+    const names = ['导入与检查', '数据概览', '配置分析方案', '结果复核与导出'];
     return '<div class="steps" style="margin-bottom:12px">' + names.map((s, i) => '<span class="step ' + (i + 1 === cur ? 'now' : i + 1 < cur ? 'done' : '') + '"><span class="n">' + (i + 1) + '</span>' + s + '</span>').join('') + '</div>';
   }
 
@@ -2516,7 +2541,7 @@ function quickChoosePage() {
     return `
       <div class="page-head">
         <div>
-          <h2>预置方案</h2>
+          <h2>配置分析方案</h2>
           <p class="desc">${isFull ? '选择适用于当前项目数据的预置方案，确认后进入分析配置。' : '按研究目标选择分析路径。'}</p>
         </div>
         <span class="cap-tag ${capTagClass()}">${capabilityText()}</span>
@@ -2717,7 +2742,7 @@ ${qeegSubjectCard}
       </tr>`).join('');
     return `
       <div class="page-head">
-        <div><h2>结果与导出</h2><p class="desc">会话内结果版本（退出即清，留档请导出结果包）；版本绑定处理方法与预处理版本。</p></div>
+        <div><h2>结果复核与导出</h2><p class="desc">会话内结果版本（退出即清，留档请导出结果包）；版本绑定处理方法与预处理版本。</p></div>
         <span class="cap-tag ${capTagClass()}">${capabilityText()}</span>
       </div>
       ${quickSteps(4)}
@@ -2800,9 +2825,23 @@ ${qeegSubjectCard}
       <div class="card">
         <h3>任务流程</h3>
         <div class="steps">
-          ${steps.map((s, i) => `<span class="step ${i === 0 && isMri ? 'now' : ''}"><span class="n">${i + 1}</span>${s}</span>`).join('')}
+          ${steps.map((s, i) => `<span class="step ${i < (App.simStep || 0) ? 'done' : i === (App.simStep || 0) ? 'now' : ''}"><span class="n">${i + 1}</span>${s}</span>`).join('')}
         </div>
         <p class="small muted" style="margin:12px 0 0">个体 MRI 方案在任务配置前增加「影像导入 → 分割与头模质控」阶段。</p>
+        <div class="progress" style="margin-top:10px"><i style="width:${Math.min(100, Math.round((App.simStep || 0) / steps.length * 100))}%"></i></div>
+        <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
+          <button class="btn primary" id="btnSimDemo" type="button">${(App.simStep || 0) >= steps.length ? '重新演示' : '开始流程演示'}</button>
+          <button class="btn" id="btnSimReset" type="button">重置</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>阶段工作区（占位）</h3>
+        <div class="grid-4">
+          <div class="card"><h4>任务配置</h4><div class="placeholder-box">电极布局 / 目标区域 / 强度参数（V2 提供）</div></div>
+          <div class="card"><h4>刺激建模</h4><div class="placeholder-box">波形类型 / 频率 / 占空比（V2 提供）</div></div>
+          <div class="card"><h4>求解</h4><div class="placeholder-box">FEM 网格与求解状态（V2 提供）</div></div>
+          <div class="card"><h4>剂量与报告</h4><div class="placeholder-box">电场剂量指标 / 报告导出（V2 提供）</div></div>
+        </div>
       </div>
       <div class="card">
         <h3>三维视图</h3>
@@ -2815,6 +2854,8 @@ ${qeegSubjectCard}
   }
 
   function spikePage() {
+    const steps = ['数据导入（ECoG/SEEG）', 'Kilosort 聚类', '质量门控', '放电统计', '事件锁定（PSTH）', '导出'];
+    const stepIdx = App.spikeStep || 0;
     return `
       <div class="page-head">
         <div>
@@ -2824,6 +2865,17 @@ ${qeegSubjectCard}
         <span class="cap-tag ${capTagClass()}">${capabilityText()}</span>
       </div>
       <div class="notice warn"><b>V3 规划中。</b>当前为产品示意，不执行真实检测。</div>
+      <div class="card">
+        <h3>任务流程</h3>
+        <div class="steps">
+          ${steps.map((s, i) => `<span class="step ${i < stepIdx ? 'done' : i === stepIdx ? 'now' : ''}"><span class="n">${i + 1}</span>${s}</span>`).join('')}
+        </div>
+        <div class="progress" style="margin-top:10px"><i style="width:${Math.min(100, Math.round(stepIdx / steps.length * 100))}%"></i></div>
+        <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
+          <button class="btn primary" id="btnSpikeDemo" type="button">${stepIdx >= steps.length ? '重新演示' : '开始流程演示'}</button>
+          <button class="btn" id="btnSpikeReset" type="button">重置</button>
+        </div>
+      </div>
       <div class="grid-4">
         <div class="card"><h3>Kilosort 聚类</h3><div class="placeholder-box">自动聚类</div></div>
         <div class="card"><h3>质量门控</h3><div class="placeholder-box">信噪比/误检率</div></div>
@@ -3167,6 +3219,45 @@ ${qeegSubjectCard}
     const b1 = $('btnBackAnalysis'), b2 = $('btnBackAnalysis2');
     if (b1) b1.addEventListener('click', () => navigate('c-workflow'));
     if (b2) b2.addEventListener('click', () => navigate('c-workflow'));
+    const btnSimDemo = $('btnSimDemo');
+    if (btnSimDemo) btnSimDemo.addEventListener('click', () => {
+      clearInterval(App._simTimer);
+      App.simStep = 0;
+      const simSteps = App.simScheme === 'mri' ? 7 : 6;
+      App._simTimer = setInterval(() => {
+        App.simStep += 1;
+        if (App.simStep >= simSteps) {
+          clearInterval(App._simTimer);
+          toast('仿真流程演示完成（V2 规划中，非真实求解）');
+        }
+        render();
+      }, 650);
+    });
+    const btnSimReset = $('btnSimReset');
+    if (btnSimReset) btnSimReset.addEventListener('click', () => {
+      clearInterval(App._simTimer);
+      App.simStep = 0;
+      render();
+    });
+    const btnSpikeDemo = $('btnSpikeDemo');
+    if (btnSpikeDemo) btnSpikeDemo.addEventListener('click', () => {
+      clearInterval(App._spikeTimer);
+      App.spikeStep = 0;
+      App._spikeTimer = setInterval(() => {
+        App.spikeStep += 1;
+        if (App.spikeStep >= 6) {
+          clearInterval(App._spikeTimer);
+          toast('Spike 流程演示完成（V3 规划中，非真实检测）');
+        }
+        render();
+      }, 650);
+    });
+    const btnSpikeReset = $('btnSpikeReset');
+    if (btnSpikeReset) btnSpikeReset.addEventListener('click', () => {
+      clearInterval(App._spikeTimer);
+      App.spikeStep = 0;
+      render();
+    });
     const btnQuickPick = $('btnQuickPick');
     const quickFileInput = $('quickFileInput');
     const startImportSim = (f) => {
@@ -4420,6 +4511,8 @@ ${qeegSubjectCard}
     App.activeRoute = null;
     App.quickStep = 1;
     App.simScheme = 'standard';
+    App.simStep = 0;
+    App.spikeStep = 0;
     App.quickFile = null;
     App.importState = null;
     App.projectTab = 'info';
@@ -4486,6 +4579,21 @@ ${qeegSubjectCard}
     toast('已进入项目分析 · ' + roleLabel());
   }
 
+  function enterWorkbench(routeId) {
+    const r = ROUTES[routeId];
+    if (!r) return;
+    App.workspaceMode = r.workspaceMode;
+    App.currentRole = 'customer';
+    App.currentProjectId = r.workspaceMode === 'full' ? DEMO.project.id : null;
+    App.currentDatasetId = DEMO.dataset.id;
+    App.activeRoute = routeId;
+    launchScreen.hidden = true;
+    app.hidden = false;
+    loginOverlay.hidden = true;
+    render();
+    toast('已进入「' + r.label + '」' + (r.featureFlag === 'sim' ? '（V2 规划中）' : r.featureFlag === 'spike' ? '（V3 规划中）' : ''));
+  }
+
   function resetDemo() {
     clearTimeout(App._demoTimer);
     clearInterval(App._quickTimer);
@@ -4497,6 +4605,8 @@ ${qeegSubjectCard}
     App.activeRoute = null;
     App.quickStep = 1;
     App.simScheme = 'standard';
+    App.simStep = 0;
+    App.spikeStep = 0;
     App.quickFile = null;
     App.batchFiles = null;
     App.batchImported = false;
@@ -4538,7 +4648,10 @@ ${qeegSubjectCard}
     enterQuick();
   });
   $('btnQuickDemo').addEventListener('click', (e) => { e.stopPropagation(); demoQuickFlow(); });
-  $('entryFull').addEventListener('click', enterFull);
+  $('entrySim').addEventListener('click', () => enterWorkbench('c-sim'));
+  $('btnSimStart').addEventListener('click', (e) => { e.stopPropagation(); enterWorkbench('c-sim'); });
+  $('entrySpike').addEventListener('click', () => enterWorkbench('c-spike'));
+  $('btnSpikeStart').addEventListener('click', (e) => { e.stopPropagation(); enterWorkbench('c-spike'); });
   $('btnFullStart').addEventListener('click', (e) => { e.stopPropagation(); enterFull(); });
 
   $('loginCancel').addEventListener('click', () => { loginOverlay.hidden = true; });
