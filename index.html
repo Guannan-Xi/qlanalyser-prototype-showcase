@@ -85,6 +85,9 @@
   .entry-actions .btn { flex: 1; width: auto; }
   .entry-link { border: 0; background: none; color: var(--primary); font-size: 12px; cursor: pointer; display: block; margin: 10px auto 0; padding: 2px 8px; }
   .entry-link:hover { text-decoration: underline; }
+  .auth-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .auth-tab { flex: 1; padding: 7px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: #fff; color: var(--muted); font-size: 13px; cursor: pointer; transition: all .15s ease; }
+  .auth-tab.on { background: var(--primary); color: #fff; border-color: var(--primary); }
   .entry-link:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
 
   .launch-top { position: absolute; top: 24px; right: 32px; display: flex; gap: 10px; align-items: center; }
@@ -534,14 +537,39 @@ padding: 16px;
   <!-- ===== 在线登录浮层 ===== -->
   <div class="overlay" id="loginOverlay" hidden>
     <div class="modal">
-      <h3>登录项目分析工作区</h3>
+      <h3>账号</h3>
       <p class="sub">登录后启用项目管理；快速分析无需登录。</p>
-      <label class="field"><span>邮箱 / 手机号</span><input class="input" id="loginAccount" type="text" value="demo.customer@quanlan.cn" autocomplete="username"></label>
-      <label class="field"><span>密码</span><input class="input" id="loginPass" type="password" value="demo123456" autocomplete="current-password"></label>
-      <div class="btn-row">
-        <button class="btn" id="loginCancel" type="button">取消</button>
-        <button class="btn primary" id="loginSubmit" type="button">登录</button>
+      <div class="auth-tabs">
+        <button class="auth-tab on" id="authTabLogin" type="button">登录</button>
+        <button class="auth-tab" id="authTabRegister" type="button">注册</button>
+        <button class="auth-tab" id="authTabForgot" type="button">忘记密码</button>
       </div>
+      <div id="authLogin">
+        <label class="field"><span>邮箱 / 手机号</span><input class="input" id="loginAccount" type="text" value="demo.customer@quanlan.cn" autocomplete="username"></label>
+        <label class="field"><span>密码</span><input class="input" id="loginPass" type="password" value="demo123456" autocomplete="current-password"></label>
+        <div class="btn-row">
+          <button class="btn" id="loginCancel" type="button">取消</button>
+          <button class="btn primary" id="loginSubmit" type="button">登录</button>
+        </div>
+      </div>
+      <div id="authRegister" hidden>
+        <label class="field"><span>昵称（可选）</span><input class="input" id="regName" type="text" placeholder="全澜脑科学研究组"></label>
+        <label class="field"><span>邮箱 / 手机号</span><input class="input" id="regAccount" type="text" placeholder="name@example.com"></label>
+        <label class="field"><span>密码（至少 6 位）</span><input class="input" id="regPass" type="password" autocomplete="new-password"></label>
+        <label class="field"><span>确认密码</span><input class="input" id="regPass2" type="password" autocomplete="new-password"></label>
+        <div class="btn-row">
+          <button class="btn" id="regCancel" type="button">取消</button>
+          <button class="btn primary" id="regSubmit" type="button">注册并登录</button>
+        </div>
+      </div>
+      <div id="authForgot" hidden>
+        <label class="field"><span>邮箱 / 手机号</span><input class="input" id="forgotAccount" type="text" placeholder="name@example.com"></label>
+        <div class="btn-row">
+          <button class="btn" id="forgotBack" type="button">返回登录</button>
+          <button class="btn primary" id="forgotSubmit" type="button">发送重置链接</button>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:14px">登录后可在「个人中心」修改密码。</p>
     </div>
   </div>
 
@@ -785,7 +813,7 @@ padding: 16px;
     'c-results':  { label: '结果与发表',         role: 'customer', workspaceMode: 'full',  featureFlag: 'core',  kind: 'projectResults' },
     'c-qeeg':     { label: 'QEEG 工作台',         role: 'customer', workspaceMode: 'full',  featureFlag: 'qeeg',  kind: 'qeegWorkbench' },
     'c-project':  { label: '项目详情',           role: 'customer', workspaceMode: 'full',  featureFlag: 'core',  kind: 'projectDetail' },
-    'c-profile':  { label: '个人中心',           role: 'customer', workspaceMode: 'full',  featureFlag: 'core',  kind: 'skeleton' },
+'c-profile':  { label: '个人中心',           role: 'customer', workspaceMode: 'full',  featureFlag: 'core',  kind: 'profile' },
     'c-sim':      { label: '快速分析（临时试算）',  role: 'customer', workspaceMode: 'full',  featureFlag: 'sim',   kind: 'sim' },
     'c-spike':    { label: '快速分析',           role: 'customer', workspaceMode: 'full',  featureFlag: 'spike', kind: 'spike' },
     'c-sim-projects':    { label: '仿真项目',    role: 'customer', workspaceMode: 'full',  featureFlag: 'sim',   kind: 'simProjects' },
@@ -1170,7 +1198,31 @@ padding: 16px;
     return '<div class="steps" style="margin-bottom:12px">' + names.map((s, i) => '<span class="step ' + (i + 1 === cur ? 'now' : i + 1 < cur ? 'done' : '') + '"><span class="n">' + (i + 1) + '</span>' + s + '</span>').join('') + '</div>';
   }
 
-  function skeletonPage() {
+  function profilePage() {
+    return `
+      <div class="page-head">
+        <div><h2>个人中心</h2><p class="desc">账号信息与密码管理。</p></div>
+      </div>
+      <div class="card">
+        <h3>账号信息</h3>
+        ${table([['账号', App.account.email || '未登录'], ['昵称', App.account.name || '—'], ['角色', '科研用户']])}
+      </div>
+      <div class="card">
+        <h3>修改密码</h3>
+        <div class="grid-2">
+          <div class="field"><span>当前密码</span><input class="input" id="pfOld" type="password" autocomplete="current-password"></div>
+          <div class="field"><span>新密码（至少 6 位）</span><input class="input" id="pfNew" type="password" autocomplete="new-password"></div>
+        </div>
+        <div class="field"><span>确认新密码</span><input class="input" id="pfNew2" type="password" autocomplete="new-password"></div>
+        <div class="btn-row" style="justify-content:flex-start;margin-top:0">
+          <button class="btn primary" id="btnPfSave" type="button">保存新密码</button>
+          <button class="btn" id="btnLogout" type="button">退出登录</button>
+        </div>
+      </div>
+      ${boundaryNote()}`;
+  }
+
+function skeletonPage() {
     const r = ROUTES[App.activeRoute];
     const planFlag = r.featureFlag === 'sim' || r.featureFlag === 'spike' ? '<span class="badge plan">规划中</span> ' : '';
     return `
@@ -3105,7 +3157,8 @@ ${qeegSubjectCard}
       r.kind === 'sim' ? simPage() :
       r.kind === 'spike' ? spikePage() :
       r.kind === 'simProjects' ? simProjectsPage() :
-      r.kind === 'spikeProjects' ? spikeProjectsPage() : skeletonPage();
+      r.kind === 'spikeProjects' ? spikeProjectsPage() :
+      r.kind === 'profile' ? profilePage() : skeletonPage();
   }
 
   function render() {
@@ -3323,6 +3376,23 @@ ${qeegSubjectCard}
     if (btnSimToQuick) btnSimToQuick.addEventListener('click', () => enterWorkbench('c-sim'));
     const btnSpikeToQuick = $('btnSpikeToQuick');
     if (btnSpikeToQuick) btnSpikeToQuick.addEventListener('click', () => enterWorkbench('c-spike'));
+    const btnPfSave = $('btnPfSave');
+    if (btnPfSave) btnPfSave.addEventListener('click', () => {
+      const oldP = $('pfOld') ? $('pfOld').value : '';
+      const np = $('pfNew') ? $('pfNew').value : '';
+      const np2 = $('pfNew2') ? $('pfNew2').value : '';
+      if (!oldP) { toast('请输入当前密码'); return; }
+      if (np.length < 6) { toast('新密码至少 6 位'); return; }
+      if (np !== np2) { toast('两次输入的新密码不一致'); return; }
+      toast('密码已更新（原型演示，不持久化）');
+      ['pfOld', 'pfNew', 'pfNew2'].forEach((id) => { const el = $(id); if (el) el.value = ''; });
+    });
+    const btnLogout = $('btnLogout');
+    if (btnLogout) btnLogout.addEventListener('click', () => {
+      App.loggedIn = false;
+      exitToLaunch();
+      toast('已退出登录');
+    });
     const btnSimDemo = $('btnSimDemo');
     if (btnSimDemo) btnSimDemo.addEventListener('click', () => {
       clearInterval(App._simTimer);
@@ -4667,6 +4737,7 @@ ${qeegSubjectCard}
     if (!App.loggedIn) {
       $('loginAccount').value = App.account.email;
       loginOverlay.hidden = false;
+      showAuth('login');
       toast('项目分析需要先登录');
       return;
     }
@@ -4877,6 +4948,43 @@ ${qeegSubjectCard}
     loginOverlay.hidden = true;
     renderLaunch();
     toast('登录成功：项目管理已启用');
+  });
+  function showAuth(which) {
+    const map = { login: 'authLogin', register: 'authRegister', forgot: 'authForgot' };
+    Object.keys(map).forEach((k) => {
+      const el = $(map[k]);
+      if (el) el.hidden = k !== which;
+    });
+    [['authTabLogin', 'login'], ['authTabRegister', 'register'], ['authTabForgot', 'forgot']].forEach((pair) => {
+      const b = $(pair[0]);
+      if (b) b.classList.toggle('on', pair[1] === which);
+    });
+  }
+  $('authTabLogin').addEventListener('click', () => showAuth('login'));
+  $('authTabRegister').addEventListener('click', () => showAuth('register'));
+  $('authTabForgot').addEventListener('click', () => showAuth('forgot'));
+  $('regCancel').addEventListener('click', () => { loginOverlay.hidden = true; });
+  $('regSubmit').addEventListener('click', () => {
+    const name = $('regName').value.trim();
+    const acct = $('regAccount').value.trim();
+    const pass = $('regPass').value;
+    const pass2 = $('regPass2').value;
+    if (!acct || !pass) { toast('请填写账号和密码'); return; }
+    if (pass.length < 6) { toast('密码至少 6 位'); return; }
+    if (pass !== pass2) { toast('两次输入的密码不一致'); return; }
+    App.currentRole = 'customer';
+    App.account = { name: name || '科研用户', email: acct };
+    App.loggedIn = true;
+    loginOverlay.hidden = true;
+    renderLaunch();
+    toast('注册成功：项目管理已启用');
+  });
+  $('forgotBack').addEventListener('click', () => showAuth('login'));
+  $('forgotSubmit').addEventListener('click', () => {
+    const acct = $('forgotAccount').value.trim();
+    if (!acct) { toast('请输入邮箱/手机号'); return; }
+    toast('重置链接已发送至 ' + acct + '（原型演示）');
+    showAuth('login');
   });
   $('btnReset').addEventListener('click', resetDemo);
   $('btnExit').addEventListener('click', exitToLaunch);
