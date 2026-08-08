@@ -101,6 +101,10 @@
   .preview-workbench { display: flex; flex-direction: column; align-items: stretch; gap: 0; flex: 1; min-height: 0; }
   .canvas-col { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
   .preview-canvas { flex: 1; min-height: 280px; overflow: auto; margin-top: 10px; position: relative; }
+  .wave-canvas-wrap { position: relative; width: 100%; }
+  .wave-canvas-wrap canvas { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 8px; background: #fbfcfe; }
+  .wave-canvas-wrap .wave-overlay { position: absolute; inset: 0; pointer-events: none; }
+  .wave-track-label { position: absolute; top: 4px; left: 10px; z-index: 5; font-size: 11px; color: #8aa0b5; background: rgba(251,252,254,.85); padding: 0 6px; border-radius: 4px; }
   .param-dock { flex: 0 0 auto; border-top: 1px solid var(--border); background: #fff; display: flex; flex-direction: column; order: 1; }
   .param-dock .dock-panel { display: none; flex-direction: column; width: 100%; }
   .param-dock.open .dock-panel { display: flex; }
@@ -137,7 +141,7 @@
   .bad-tag.manual { background: #fdf3e3; border-color: #ecd3a6; color: #a4741d; }
   .bad-tag .bad-rm { border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 12px; line-height: 1; padding: 0 2px; }
   .pick-bar { margin-bottom: 8px; padding: 7px 12px; background: #e8f1fb; border: 1px solid #bcd7f2; border-radius: 8px; color: #2a5fae; font-size: 12px; display: flex; align-items: center; }
-  .tool-overlay { position: absolute; inset: 0; z-index: 15; cursor: crosshair; }
+  .tool-overlay { position: absolute; inset: 0; z-index: 15; cursor: crosshair; pointer-events: none; }
   .input-addon { display: flex; align-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: #fff; overflow: hidden; }
   .input-addon .input { border: 0; box-shadow: none; padding: 8px 10px; }
   .input-addon .addon { padding: 0 9px; color: #8aa0b5; font-size: 12px; background: #f6f8fb; align-self: stretch; display: flex; align-items: center; border-left: 1px solid var(--border-strong); }
@@ -890,6 +894,11 @@ padding: 16px;
     channelOrder: null,        // 通道顺序（null=默认）
     channelHidden: [],         // 隐藏通道
     chanGain: {},              // 单通道增益覆盖 {chName: gain}
+    selectMode: false,         // 选段模式（Reject/Remain）
+    pendingSelect: null,       // 拖拽中的选区 {start,end}
+    remainSegs: [],            // 保留标记段（绿色）
+    selectUndo: [],            // 选段操作撤销栈
+    selectRedo: [],            // 选段操作重做栈
     preParams: { hp: '0.5 Hz', lp: '70 Hz', notch: '50 Hz', art: '200', badArt: '200', policy: '完全删除', ica: '自动', rerefMode: 'avg', rerefChannel: 'Cz', badChan: '启用（球形插值）', badList: [{ name: 'Cz', source: 'auto', reason: '方差过高' }] },
     emg: {                    // EMG 模块（批次②）
       range: { start: '00:00:00', end: '06:12:00' },
@@ -1636,6 +1645,425 @@ function skeletonPage() {
     out += '</svg>';
     return out;
   }
+  /* ===== Canvas 波形渲染器（2026-08-09，替代 SVG 波形层；SVG 仅作标注覆盖层） ===== */
+  function v1WaveCanvasHtml() {
+    const rowH = 52, topH = 62;
+    const all = orderedChannels();
+    const tracks = [
+      { kind: 'eeg', label: 'EEG / EOG', chs: all.filter(function (c) { return c.role !== 'EMG' && c.role !== 'ECG'; }) },
+      { kind: 'emg', label: 'EMG', chs: all.filter(function (c) { return c.role === 'EMG'; }) },
+      { kind: 'ecg', label: 'ECG', chs: all.filter(function (c) { return c.role === 'ECG'; }) }
+    ];
+    let out = '<div id="waveMultiWrap">';
+    tracks.forEach(function (tr) {
+      const H = topH + Math.max(1, tr.chs.length) * rowH + 26;
+      out += '<div class="wave-canvas-wrap" data-track="' + tr.kind + '" ' + (tr.chs.length ? '' : 'hidden') + ' style="height:' + H + 'px;margin-bottom:10px">' +
+        '<div class="wave-track-label">' + tr.label + '</div>' +
+        '<canvas id="waveCanvas_' + tr.kind + '" width="1200" height="' + H + '"></canvas>' +
+        (tr.kind === 'eeg' ? '<svg id="waveOverlay" class="wave-overlay" viewBox="0 0 1200 ' + H + '" preserveAspectRatio="none"></svg>' : '') +
+        '</div>';
+    });
+    out += '<div class="wave-canvas-wrap" data-track="spectrum" style="height:130px;margin-bottom:10px"><div class="wave-track-label">频谱（示意）</div><canvas id="waveCanvas_spectrum" width="1200" height="130"></canvas></div>';
+    out += '</div>';
+    return out;
+  }
+
+  function v1WaveMetrics(kind) {
+    kind = kind || 'eeg';
+    const cv = $('waveCanvas_' + kind);
+    if (!cv) return null;
+    const wrap = cv.parentElement;
+    const r = cv.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    const all = orderedChannels();
+    const chs = kind === 'eeg' ? all.filter((c) => c.role !== 'EMG' && c.role !== 'ECG') : kind === 'emg' ? all.filter((c) => c.role === 'EMG') : kind === 'ecg' ? all.filter((c) => c.role === 'ECG') : [];
+    const rowH = 52, topH = 62, labelW = 78;
+    const W = r.width, H = r.height;
+    const plotW = W - labelW, plotH = H - topH - 26;
+    return { wrap, cv, r, W, H, chs, rowH, topH, labelW, plotW, plotH,
+      x: (t) => labelW + ((t - (App.viewStart || 0)) / (App.viewSecs || 10)) * plotW,
+      t: (px) => (App.viewStart || 0) + ((px - labelW) / plotW) * (App.viewSecs || 10),
+      chY: (i) => topH + i * rowH + rowH / 2,
+      chAt: (py) => Math.max(0, Math.min(chs.length - 1, Math.floor((py - topH) / rowH))) };
+  }
+
+  function segVisible(key) {
+    return !(App.segFilter && App.segFilter.length) || App.segFilter.indexOf(key) >= 0;
+  }
+
+  function v1WaveValue(t, chIdx, gain) {
+    let v = v1WaveY(t, chIdx, 1);
+    const rm = (App.preParams && App.preParams.rerefMode) || 'avg';
+    const rc = (App.preParams && App.preParams.rerefChannel) || '';
+    if (rm === 'chan' && rc) {
+      const refIdx = orderedChannels().findIndex((c) => c.name === rc);
+      if (refIdx >= 0 && refIdx !== chIdx) v = v - v1WaveY(t, refIdx, 1) * 0.4;
+    } else if (rm === 'avg') {
+      v = v - v1WaveY(t, 0, 1) * 0.12;
+    }
+    if (App.viewMode === 'processed') v = v * 0.55 - Math.sin(2 * Math.PI * 0.7 * t) * 0.12;
+    return v;
+  }
+
+  function drawTrack(kind) {
+    const m = v1WaveMetrics(kind);
+    if (!m) return;
+    const cv = m.cv, ctx = cv.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(m.W * dpr);
+    cv.height = Math.round(m.H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, m.W, m.H);
+    const start = App.viewStart || 0, secs = App.viewSecs || 10;
+    const gain = App.viewGain || 100;
+    const amp = ((gain / 100) * 20); // 每通道行内振幅像素（行高52，留边）
+    // 网格
+    ctx.strokeStyle = '#e3ebf3';
+    ctx.lineWidth = 1;
+    for (let g = 0; g <= 5; g++) {
+      const x = m.x(start + (g * secs) / 5);
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, m.H - 26); ctx.stroke();
+    }
+    // 色带（坏段红/伪迹黄/插值蓝 + 分析区间）
+    const segs = [['bad', (App.badSegs || []), 'rgba(228,106,80,.13)'], ['art', (App.artifactSegs || []), 'rgba(217,165,20,.12)'], ['interp', (App.interpSegs || []), 'rgba(63,127,214,.12)']];
+    segs.forEach(function (s) {
+      if (!segVisible(s[0])) return;
+      s[1].forEach(function (seg) {
+        const x0 = Math.max(0, m.x(Math.max(start, seg.start))), x1 = Math.min(m.W, m.x(Math.min(start + secs, seg.end)));
+        if (x1 <= x0) return;
+        ctx.fillStyle = s[2];
+        ctx.fillRect(x0, 0, x1 - x0, m.H - 26);
+      });
+    });
+    if (App.analysisRange) {
+      const ax0 = m.x(Math.max(start, App.analysisRange.start)), ax1 = m.x(Math.min(start + secs, App.analysisRange.end));
+      if (ax1 > ax0) { ctx.fillStyle = 'rgba(63,127,214,.08)'; ctx.fillRect(ax0, 0, ax1 - ax0, m.H - 26); }
+    }
+    (App.remainSegs || []).forEach(function (seg) {
+      const x0 = Math.max(0, m.x(Math.max(start, seg.start))), x1 = Math.min(m.W, m.x(Math.min(start + secs, seg.end)));
+      if (x1 > x0) { ctx.fillStyle = 'rgba(46,160,67,.12)'; ctx.fillRect(x0, 0, x1 - x0, m.H - 26); }
+    });
+    // 波形
+    m.chs.forEach(function (ch, i) {
+      const yMid = m.chY(i);
+      const g = (App.chanGain && App.chanGain[ch.name]) || gain;
+      const a = ((g / 100) * 20);
+      const isBad = v1BadNames().indexOf(ch.name) >= 0;
+      const isRef = (App.preParams || {}).rerefMode === 'chan' && (App.preParams || {}).rerefChannel === ch.name;
+      if (isRef) { ctx.fillStyle = 'rgba(63,127,214,.08)'; ctx.fillRect(m.labelW, m.chY(i) - m.rowH / 2, m.plotW, m.rowH); }
+      if (isBad) { ctx.fillStyle = 'rgba(228,106,80,.7)'; ctx.fillRect(m.labelW, m.chY(i) - m.rowH / 2, 4, m.rowH); }
+      ctx.strokeStyle = '#dde6ef';
+      ctx.beginPath(); ctx.moveTo(m.labelW, yMid); ctx.lineTo(m.W, yMid); ctx.stroke();
+      ctx.strokeStyle = ch.role === 'EMG' ? '#8b5cf6' : '#2856a0';
+      ctx.lineWidth = 1.2;
+      if (App.viewMode === 'preview') ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      for (let px = 0; px <= m.plotW; px += 2) {
+        const t = start + (px / m.plotW) * secs;
+        let v = v1WaveValue(t, i, g);
+        if (App.viewMode === 'preview') v = v * 0.55 - Math.sin(2 * Math.PI * 0.7 * t) * 0.12;
+        const y = yMid - v * a;
+        if (px === 0) ctx.moveTo(m.labelW + px, y); else ctx.lineTo(m.labelW + px, y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // 通道名
+      ctx.font = '12px sans-serif';
+      ctx.fillStyle = isRef ? '#2a5fae' : isBad ? '#d33' : '#284880';
+      ctx.fillText(ch.name + (isBad ? ' ●' : '') + (isRef ? ' ◀' : ''), 4, yMid + 4);
+      if (ch.role !== 'EEG') { ctx.fillStyle = '#8aa0b5'; ctx.font = '10px sans-serif'; ctx.fillText(ch.role, m.labelW - 6, yMid + 4); ctx.font = '12px sans-serif'; }
+    });
+    // 时间轴
+    if (kind === 'eeg') {
+      ctx.fillStyle = '#66798c';
+      ctx.font = '11px sans-serif';
+      for (let g = 0; g <= 5; g++) {
+        const t = start + (g * secs) / 5, x = m.x(t);
+        ctx.textAlign = g === 5 ? 'right' : 'center';
+        ctx.fillText(t.toFixed(secs >= 10 ? 0 : 1) + 's', x, m.H - 8);
+      }
+      ctx.textAlign = 'left';
+    }
+  }
+
+  function drawSpectrumTrack() {
+    const cv = $('waveCanvas_spectrum');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const r = cv.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, r.width, r.height);
+    const start = App.viewStart || 0, secs = App.viewSecs || 10;
+    const labelW = 78, plotW = r.width - labelW, topH = 20, H = r.height;
+    const W = r.width;
+    for (let px = 0; px < plotW; px += 2) {
+      const t = start + (px / plotW) * secs;
+      for (let fy = 0; fy < H - topH; fy += 2) {
+        const f = 1 + (fy / Math.max(1, H - topH)) * 45;
+        const e = 0.25 + 0.75 / (1 + f / 9) + Math.sin(t * 2.2) * 0.05 + (v1Rnd(Math.floor(t * 8) * 97 + Math.floor(f)) - 0.5) * 0.08;
+        const v = Math.max(0, Math.min(1, e));
+        ctx.fillStyle = 'rgba(40,86,160,' + v.toFixed(2) + ')';
+        ctx.fillRect(labelW + px, H - topH - fy - 2, 2, 2);
+      }
+    }
+    ctx.fillStyle = '#66798c'; ctx.font = '11px sans-serif';
+    ctx.fillText('0 Hz', labelW + 4, H - 6);
+    ctx.fillText('45 Hz', W - 8, H - 6);
+  }
+
+  function drawWaveCanvas() {
+    ['eeg', 'emg', 'ecg'].forEach(function (k) {
+      const cv = $('waveCanvas_' + k);
+      if (cv && !cv.closest('[hidden]')) drawTrack(k);
+    });
+    drawSpectrumTrack();
+    renderWaveOverlay();
+  }
+
+  function renderWaveOverlay() {
+    const svg = $('waveOverlay');
+    if (!svg) return;
+    const m = v1WaveMetrics();
+    if (!m) return;
+    const chs = m.chs, start = App.viewStart || 0, secs = App.viewSecs || 10;
+    const fmtTime = (s) => '00:' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+    const processed = App.viewMode === 'processed';
+    const previewFilter = App.viewMode === 'preview';
+    let out = '';
+    // 状态行 + 分析区间
+    out += '<text x="8" y="16" font-size="12" fill="#556b80">' + (processed ? '已应用（' + (App.preVersions && App.preVersions.length ? App.preVersions[App.preVersions.length - 1].id : 'v1') + '）' : previewFilter ? '滤波预览（未应用）' : '原始') + ' · 时窗 ' + start.toFixed(1) + '–' + (start + secs).toFixed(1) + ' s' + (v1BadNames().length ? ' · ● 坏道 ' + v1BadNames().join('/') : '') + '</text>';
+    if (App.analysisRange) {
+      out += '<text id="svgRangeStatus" x="' + (m.W - 4) + '" y="16" font-size="11" fill="#3f7fd6" text-anchor="end" style="cursor:pointer" title="点击以当前视窗为分析区间">分析区间 ' + fmtTime(App.analysisRange.start) + '–' + fmtTime(App.analysisRange.end) + '</text>';
+    }
+    // 事件图例（左）与色带图例（右）
+    const evLegend = [['N1', '#3f7fd6'], ['N2', '#3f7fd6'], ['REM', '#3f7fd6'], ['Spike', '#e46a50']];
+    let legendX = 8;
+    evLegend.forEach(function (lg) {
+      const on = !(App.eventFilter && App.eventFilter.length) || App.eventFilter.indexOf(lg[0]) >= 0;
+      out += '<text x="' + legendX + '" y="34" font-size="11" fill="' + lg[1] + '" opacity="' + (on ? '1' : '0.35') + '" font-weight="' + (on ? '700' : '400') + '" data-ev-legend="' + lg[0] + '" style="cursor:pointer;pointer-events:auto">' + lg[0] + '</text>';
+      legendX += lg[0].length * 8 + 16;
+    });
+    const segLegend = [['插', '#2a5fae', 'interp', '插值段'], ['坏', '#c0392b', 'bad', '坏段'], ['伪', '#b8860b', 'art', '伪迹']];
+    let segX = m.W - 4;
+    segLegend.forEach(function (lg) {
+      const on = !(App.segFilter && App.segFilter.length) || App.segFilter.indexOf(lg[2]) >= 0;
+      out += '<text x="' + segX + '" y="34" font-size="11" fill="' + lg[1] + '" opacity="' + (on ? '1' : '0.35') + '" font-weight="' + (on ? '700' : '400') + '" data-seg-legend="' + lg[2] + '" style="cursor:pointer;pointer-events:auto">▮ ' + lg[0] + '<title>' + lg[3] + '（点击筛选）</title></text>';
+      segX -= 30;
+    });
+    // 事件 pill（标记轨道）
+    (v1DemoEvents() || []).forEach(function (e) {
+      if (App.eventFilter && App.eventFilter.length && App.eventFilter.indexOf(e.label) < 0) return;
+      const ex = m.x(e.t);
+      if (ex < m.labelW || ex > m.W) return;
+      const c = e.kind === 'spike' ? '#e46a50' : '#3f7fd6';
+      const w = e.label.length * 6.5 + 12;
+      out += '<rect x="' + (ex + 2) + '" y="42" width="' + w + '" height="14" rx="3" fill="' + c + '" opacity="0.13" pointer-events="none"/>';
+      out += '<text x="' + (ex + 8) + '" y="53" font-size="11" fill="' + c + '">' + e.label + '</text>';
+    });
+    // 注释 pill
+    (App.annotations || []).forEach(function (a) {
+      const ax = m.x(a.t);
+      if (ax < m.labelW || ax > m.W) return;
+      const w = a.label.length * 6.5 + 12;
+      out += '<rect x="' + (ax + 2) + '" y="58" width="' + w + '" height="14" rx="3" fill="#1e7d46" opacity="0.13" pointer-events="none"/>';
+      out += '<text x="' + (ax + 8) + '" y="69" font-size="11" fill="#1e7d46">' + a.label + '</text>';
+      out += '<text x="' + (ax + w + 9) + '" y="69" font-size="11" fill="#1e7d46" data-ann-rm="' + a.t + '" style="cursor:pointer;pointer-events:auto">✕</text>';
+    });
+    // 分析区间手柄
+    if (App.analysisRange) {
+      const as = Math.max(start, App.analysisRange.start), ae = Math.min(start + secs, App.analysisRange.end);
+      const ax0 = m.x(as), ax1 = m.x(ae);
+      if (ax1 > m.labelW && ax0 < m.W) {
+        out += '<rect id="svgRangeBody" x="' + Math.max(m.labelW, ax0) + '" y="0" width="' + Math.max(2, Math.min(m.W, ax1) - Math.max(m.labelW, ax0)) + '" height="' + (m.H - 26) + '" fill="transparent" style="cursor:ew-resize;pointer-events:none"/>';
+        out += '<rect id="svgRangeL" x="' + Math.max(m.labelW, ax0) + '" y="0" width="6" height="' + (m.H - 26) + '" fill="#3f7fd6" opacity="0.55" style="cursor:ew-resize;pointer-events:auto"/>';
+        out += '<rect id="svgRangeR" x="' + Math.min(m.W, ax1) + '" y="0" width="6" height="' + (m.H - 26) + '" fill="#3f7fd6" opacity="0.55" style="cursor:ew-resize;pointer-events:auto"/>';
+      }
+    }
+    svg.setAttribute('viewBox', '0 0 ' + m.W + ' ' + m.H);
+    svg.innerHTML = out;
+  }
+
+  function bindWaveCanvas() {
+    const cv = $('waveCanvas_eeg');
+    if (!cv) return;
+    drawWaveCanvas();
+    renderWaveOverlay();
+    // overlay 动态填充后重新绑定交互（图例/状态/注释/手柄）
+    document.querySelectorAll('[data-ev-legend]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const t = el.getAttribute('data-ev-legend');
+        App.eventFilter = (App.eventFilter || []).indexOf(t) >= 0 ? (App.eventFilter || []).filter((x) => x !== t) : (App.eventFilter || []).concat([t]);
+        render();
+      });
+    });
+    document.querySelectorAll('[data-seg-legend]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const k = el.getAttribute('data-seg-legend');
+        App.segFilter = (App.segFilter || []).indexOf(k) >= 0 ? (App.segFilter || []).filter((x) => x !== k) : (App.segFilter || []).concat([k]);
+        render();
+      });
+    });
+    const svgRangeStatus = $('svgRangeStatus');
+    if (svgRangeStatus) svgRangeStatus.addEventListener('click', () => {
+      if (!confirm('以当前查看窗口作为分析时间范围？现有区间将被覆盖。')) return;
+      const s = App.viewStart || 0, e = s + (App.viewSecs || 10);
+      App.analysisRange = { start: Math.max(0, s), end: Math.min(10, e) };
+      App.preDirty = true;
+      render();
+      toast('分析时间范围已设为 ' + s.toFixed(1) + '–' + e.toFixed(1) + ' s');
+    });
+    document.querySelectorAll('[data-ann-rm]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const t = Number(el.getAttribute('data-ann-rm'));
+        if (!confirm('删除该注释？')) return;
+        App.annotations = (App.annotations || []).filter((a) => Math.abs(a.t - t) > 0.001);
+        render();
+      });
+    });
+    const rangeHandles = [['svgRangeL', 'l'], ['svgRangeR', 'r'], ['svgRangeBody', 'b']];
+    rangeHandles.forEach(([id, kind]) => {
+      const el = $(id);
+      if (el) el.addEventListener('mousedown', (ev) => { ev.preventDefault(); window.__rangeDrag = kind; });
+    });
+    const m = () => v1WaveMetrics();
+    // 滚轮缩放（以鼠标为中心）
+    cv.addEventListener('wheel', function (ev) {
+      ev.preventDefault();
+      const mm = m(); if (!mm) return;
+      const t0 = mm.t(ev.offsetX);
+      const factor = ev.deltaY > 0 ? 1.25 : 0.8;
+      let ns = Math.max(0.5, Math.min(10, (App.viewSecs || 10) * factor));
+      let ns2 = Math.max(0.5, Math.min(10, ns));
+      let start = Math.max(0, Math.min(10 - ns2, t0 - (t0 - (App.viewStart || 0)) * (ns2 / (App.viewSecs || 10))));
+      App.viewSecs = ns2; App.viewStart = start;
+      render();
+    }, { passive: false });
+    // 双击回到起点/全程
+    cv.addEventListener('dblclick', function () {
+      App.viewStart = 0; App.viewSecs = 10; render();
+    });
+    // 拖拽平移
+    let drag = null;
+    cv.addEventListener('mousedown', function (ev) {
+      if (ev.button !== 0) return;
+      if (App.selectMode) { drag = { kind: 'select', x0: ev.offsetX, y0: ev.offsetY, x1: ev.offsetX, y1: ev.offsetY, shift: ev.shiftKey }; return; }
+      if (App.zoomRectMode) { drag = { kind: 'rect', x0: ev.offsetX, y0: ev.offsetY, x1: ev.offsetX, y1: ev.offsetY }; return; }
+      if (App.measureMode) { const mm = m(); if (!mm) return; const t = Math.max(0, Math.min(10, mm.t(ev.offsetX))); const i = mm.chAt(ev.offsetY); const uV = ((mm.chY(i) - ev.offsetY) / 20) * 100; App.measurePts = App.measurePts || []; if (App.measurePts.length >= 2) App.measurePts = []; App.measurePts.push({ t: t, uV: uV }); const rd = $('measureReadout'); if (rd) { if (App.measurePts.length === 1) rd.textContent = '已固定 P1：' + t.toFixed(2) + 's · ' + (uV >= 0 ? '+' : '') + uV.toFixed(0) + 'µV；再单击固定 P2'; else { const p0 = App.measurePts[0], p1 = App.measurePts[1]; rd.textContent = 'P1 ' + p0.t.toFixed(2) + 's/' + p0.uV.toFixed(0) + 'µV · P2 ' + p1.t.toFixed(2) + 's/' + p1.uV.toFixed(0) + 'µV · Δt=' + Math.abs(p1.t - p0.t).toFixed(2) + 's · ΔµV=' + Math.abs(p1.uV - p0.uV).toFixed(0); } } return; }
+      if (App.annotateMode) {
+        const mm = m(); if (!mm) return;
+        const t = Math.max(0, Math.min(10, mm.t(ev.offsetX)));
+        const label = prompt('注释文字：', '注' + ((App.annotations || []).length + 1));
+        if (label === null || label.trim() === '') return;
+        App.annotations = (App.annotations || []).concat([{ t: t, label: label.trim() }]);
+        render(); return;
+      }
+      if (App.rerefPickMode) {
+        const mm = m(); if (!mm) return;
+        const i = mm.chAt(ev.offsetY);
+        App.preParams = Object.assign({}, App.preParams || {}, { rerefMode: 'chan', rerefChannel: mm.chs[i].name });
+        App.rerefPickMode = false;
+        App.preDirty = true;
+        render();
+        toast('已选择参考通道：' + mm.chs[i].name);
+        return;
+      }
+      drag = { kind: 'pan', x0: ev.offsetX, lastX: ev.offsetX };
+    });
+    cv.addEventListener('mousemove', function (ev) {
+      if (App.measureMode) {
+        const mm = m(); if (!mm) return;
+        const t = Math.max(0, Math.min(10, mm.t(ev.offsetX)));
+        const i = mm.chAt(ev.offsetY);
+        const uV = (((mm.chY(i) - ev.offsetY) / 20) * 100);
+        let txt = 't=' + t.toFixed(2) + ' s · ' + mm.chs[i].name + ' · ' + (uV >= 0 ? '+' : '') + uV.toFixed(0) + ' µV';
+        if (App.measurePts && App.measurePts.length === 1) { const p0 = App.measurePts[0]; txt += '　Δt=' + Math.abs(t - p0.t).toFixed(2) + ' s'; }
+        const rd = $('measureReadout'); if (rd) rd.textContent = txt;
+        const mo = $('measureOverlay'); if (mo) { mo.hidden = false; const c1 = $('crossV'), c2 = $('crossH'); if (c1) { c1.style.left = ev.offsetX + 'px'; c1.style.display = 'block'; } if (c2) { c2.style.top = ev.offsetY + 'px'; c2.style.display = 'block'; } }
+        return;
+      }
+      if (!drag) return;
+      if (drag.kind === 'rect' || drag.kind === 'select') { drag.x1 = ev.offsetX; drag.y1 = ev.offsetY; drawRectBox(drag); return; }
+      if (drag.kind === 'pan') {
+        const mm = m(); if (!mm) return;
+        const dt = ((drag.lastX - ev.offsetX) / mm.plotW) * (App.viewSecs || 10);
+        drag.lastX = ev.offsetX;
+        App.viewStart = Math.max(0, Math.min(10 - (App.viewSecs || 10), (App.viewStart || 0) + dt));
+        render();
+      }
+    });
+    cv.addEventListener('mouseup', function (ev) {
+      if (!drag) return;
+      if (drag.kind === 'select') {
+        const mm = m(); if (!mm) return;
+        const t0 = Math.max(0, Math.min(10, mm.t(Math.min(drag.x0, drag.x1))));
+        const t1 = Math.max(0, Math.min(10, mm.t(Math.max(drag.x0, drag.x1))));
+        hideRectBox();
+        if (Math.abs(t1 - t0) >= 0.1) {
+          const seg = { start: Math.min(t0, t1), end: Math.max(t0, t1) };
+          App.pendingSelect = seg;
+          const pop = $('selectPopover');
+          pop.innerHTML = '<b style="color:#284880">选段：' + seg.start.toFixed(2) + '–' + seg.end.toFixed(2) + ' s</b><div style="margin-top:8px;display:flex;gap:6px"><button class="btn" data-select-act="reject" type="button" style="background:#e46a50;color:#fff;border-color:#e46a50">剔除</button><button class="btn" data-select-act="remain" type="button" style="background:#2ea043;color:#fff;border-color:#2ea043">保留</button><button class="btn" data-select-act="cancel" type="button">取消</button></div>';
+          pop.hidden = false;
+          pop.style.left = Math.min(ev.offsetX, mm.W - 290) + 'px';
+          pop.style.top = Math.max(8, ev.offsetY - 50) + 'px';
+        }
+      } else if (drag.kind === 'rect') {
+        const mm = m(); if (!mm) return;
+        const t0 = Math.max(0, Math.min(10, mm.t(Math.min(drag.x0, drag.x1))));
+        const t1 = Math.max(0, Math.min(10, mm.t(Math.max(drag.x0, drag.x1))));
+        const w = (Math.abs(drag.x1 - drag.x0) / mm.plotW) * (App.viewSecs || 10);
+        hideRectBox();
+        if (w >= 0.5) {
+          App.prevView = { start: App.viewStart || 0, secs: App.viewSecs || 10 };
+          App.viewStart = Math.max(0, Math.min(10 - w, t0));
+          App.viewSecs = Math.max(0.5, w);
+        }
+        App.zoomRectMode = false;
+        render();
+        toast('框选缩放完成（Esc 还原）');
+      }
+      drag = null;
+    });
+    // 色带点击 → 复核 popover
+    cv.addEventListener('click', function (ev) {
+      const mm = m(); if (!mm) return;
+      const t = mm.t(ev.offsetX);
+      const hit = function (arr, key, color, label, rule) {
+        for (let i = 0; i < arr.length; i++) {
+          if (t >= arr[i].start && t <= arr[i].end) {
+            const pop = $('segPopover');
+            pop.innerHTML = '<b style="color:' + color + '">' + label + '：' + arr[i].start.toFixed(2) + '–' + arr[i].end.toFixed(2) + ' s</b><br><span class="muted small">触发规则：' + rule + '</span><div style="margin-top:8px;display:flex;gap:6px"><button class="btn" data-seg-act="remove" type="button">忽略此段</button><button class="btn" data-seg-act="to-bad" type="button">转坏段</button><button class="btn" data-seg-act="close" type="button">关闭</button></div>';
+            pop.hidden = false;
+            pop.style.left = Math.min(ev.offsetX, mm.W - 290) + 'px';
+            pop.style.top = Math.max(8, ev.offsetY - 50) + 'px';
+            pop.dataset.kind = key; pop.dataset.idx = String(i);
+            return true;
+          }
+        }
+        return false;
+      };
+      if (!segVisible('bad') || !hit(App.badSegs || [], 'bad', '#e46a50', '坏段', '振幅/梯度超阈值，参与删除或置零')) {
+        if (segVisible('art') && hit(App.artifactSegs || [], 'art', '#d9a514', '伪迹', '振幅或梯度超阈值，仅提示')) return;
+        if (segVisible('interp')) hit(App.interpSegs || [], 'interp', '#3f7fd6', '插值段', '坏道插值修复区间');
+      }
+    });
+  }
+
+  function drawRectBox(drag) {
+    let b = $('zoomRectBox');
+    if (!b) { const ov = $('zoomRectOverlay'); if (ov) { ov.hidden = false; b = $('zoomRectBox'); } }
+    if (!b) return;
+    b.style.display = 'block';
+    b.style.left = Math.min(drag.x0, drag.x1) + 'px';
+    b.style.top = Math.min(drag.y0, drag.y1) + 'px';
+    b.style.width = Math.abs(drag.x1 - drag.x0) + 'px';
+    b.style.height = Math.abs(drag.y1 - drag.y0) + 'px';
+  }
+  function hideRectBox() { const b = $('zoomRectBox'); if (b) b.style.display = 'none'; const ov = $('zoomRectOverlay'); if (ov) ov.hidden = true; }
+
   function v1EventCheckHtml() {
     const evs = v1DemoEvents();
     const chips = evs.map(function (e) {
@@ -2818,12 +3246,18 @@ function skeletonPage() {
               <p class="field-note" style="margin-top:6px">拖拽波形上的蓝色区间或手柄调整。</p>
               </section>
             <section class="dock-group t4" id="card-2">
-                <h4 class="pre-group">② 滤波</h4>
-                <div class="grid-2" style="grid-template-columns:repeat(3,1fr)">
-                  <div class="field"><span>高通</span><select class="select" id="preHp"><option${p.hp === '0.5 Hz' ? ' selected' : ''}>0.5 Hz</option><option${p.hp === '0.1 Hz' ? ' selected' : ''}>0.1 Hz</option><option${p.hp === '关闭' ? ' selected' : ''}>关闭</option></select></div>
-                  <div class="field"><span>低通</span><select class="select" id="preLp"><option${p.lp === '70 Hz' ? ' selected' : ''}>70 Hz</option><option${p.lp === '45 Hz' ? ' selected' : ''}>45 Hz</option><option${p.lp === '关闭' ? ' selected' : ''}>关闭</option></select></div>
-                  <div class="field"><span>陷波</span><select class="select" id="preNotch"><option${p.notch === '50 Hz' ? ' selected' : ''}>50 Hz</option><option${p.notch === '60 Hz' ? ' selected' : ''}>60 Hz</option><option${p.notch === '关闭' ? ' selected' : ''}>关闭</option></select></div>
-                </div>
+              <h4 class="pre-group">② 滤波</h4>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+                ${[['Delta', '0.5–4 Hz'], ['Theta', '4–8 Hz'], ['Alpha', '8–13 Hz'], ['SMR', '12–15 Hz'], ['Beta', '13–30 Hz'], ['Custom', '0.5–30 Hz']].map(function (b) {
+                  const on = (App.preParams.hp + '–' + App.preParams.lp) === b[1];
+                  return '<button class="chip ' + (on ? 'on' : '') + '" data-bp-preset="' + b[1] + '" type="button" style="cursor:pointer" title="快速带通：' + b[1] + '">' + b[0] + '</button>';
+                }).join('')}
+              </div>
+              <div class="grid-2" style="grid-template-columns:repeat(3,1fr)">
+                <div class="field"><span>高通</span><select class="select" id="preHp">${['0.1 Hz', '0.5 Hz', '1 Hz', '4 Hz', '8 Hz', '12 Hz', '13 Hz', '30 Hz', '45 Hz', '70 Hz', '关闭'].map(function (v) { return '<option' + (p.hp === v ? ' selected' : '') + '>' + v + '</option>'; }).join('')}</select></div>
+                <div class="field"><span>低通</span><select class="select" id="preLp">${['4 Hz', '8 Hz', '13 Hz', '15 Hz', '30 Hz', '45 Hz', '70 Hz', '100 Hz', '关闭'].map(function (v) { return '<option' + (p.lp === v ? ' selected' : '') + '>' + v + '</option>'; }).join('')}</select></div>
+                <div class="field"><span>陷波</span><select class="select" id="preNotch"><option${p.notch === '50 Hz' ? ' selected' : ''}>50 Hz</option><option${p.notch === '60 Hz' ? ' selected' : ''}>60 Hz</option><option${p.notch === '关闭' ? ' selected' : ''}>关闭</option></select></div>
+              </div>
               </section>
             <section class="dock-group t4" id="card-3">
               <h4 class="pre-group">③ 去噪与伪迹</h4>
@@ -3013,6 +3447,38 @@ function skeletonPage() {
       </div>`;
   }
 
+  function exportModalHtml() {
+    return `
+      <div class="modal-backdrop" id="exportBackdrop" hidden></div>
+      <div class="modal-card" id="exportModal" hidden>
+        <div class="modal-head">
+          <h3 style="margin:0;font-size:14px">导出</h3>
+          <button class="btn" id="btnExportClose" type="button">×</button>
+        </div>
+        <div class="muted small" style="margin:0 0 8px">勾选要导出的内容与选项。</div>
+        <div style="margin-bottom:10px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+            <label class="chip" style="cursor:pointer"><input type="checkbox" id="expPng" checked> 视窗截图 PNG</label>
+            <label class="chip" style="cursor:pointer"><input type="checkbox" id="expSvg"> 视窗截图 SVG</label>
+            <label class="chip" style="cursor:pointer"><input type="checkbox" id="expCsv" checked> 通道数据 CSV</label>
+            <label class="chip" style="cursor:pointer"><input type="checkbox" id="expEdf"> 处理结果 EDF</label>
+            <label class="chip" style="cursor:pointer"><input type="checkbox" id="expLog" checked> 操作日志 JSON</label>
+          </div>
+          <div class="muted small" style="margin-bottom:4px">轨道（截图/CSV）：</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${['eeg', 'emg', 'ecg', 'spectrum'].map(function (k) { return '<label class="chip" style="cursor:pointer"><input type="checkbox" data-exp-track="' + k + '" checked> ' + k.toUpperCase() + '</label>'; }).join('')}
+          </div>
+          <div style="display:flex;gap:12px;margin-top:8px;align-items:center;flex-wrap:wrap">
+            <label class="muted small">范围：<select class="select" id="expRange" style="width:auto"><option value="view">当前视窗</option><option value="all">全程</option></select></label>
+            <label class="muted small">分辨率：<select class="select" id="expDpi" style="width:auto"><option value="1">1×</option><option value="2">2×</option></select></label>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px">
+          <button class="btn primary" id="btnExportRun" type="button">导出勾选项</button>
+        </div>
+      </div>`;
+  }
+
   function quickOverviewPage() {
     const qf = App.quickFile;
     const d = DEMO.quick;
@@ -3048,16 +3514,23 @@ function skeletonPage() {
               <button class="btn" id="btnZoomOut" type="button" title="缩短时间窗（−）">−</button>
               <button class="btn" id="btnZoomIn" type="button" title="扩展时间窗（+）">＋</button>
               <select class="select" id="viewPreset" style="width:auto" title="时窗预设">
-                <option value="2"${viewSecs === 2 ? ' selected' : ''}>2 s/页</option>
-                <option value="5"${viewSecs === 5 ? ' selected' : ''}>5 s/页</option>
-                <option value="10"${viewSecs >= 10 ? ' selected' : ''}>10 s/页</option>
+                <option value="1"${viewSecs === 1 ? ' selected' : ''}>1 s</option>
+                <option value="5"${viewSecs === 5 ? ' selected' : ''}>5 s</option>
+                <option value="30" disabled title="演示数据时长 10s">30 s</option>
+                <option value="60" disabled title="演示数据时长 10s">60 s</option>
+                <option value="90" disabled title="演示数据时长 10s">90 s</option>
+                <option value="180" disabled title="演示数据时长 10s">3 min</option>
+                <option value="900" disabled title="演示数据时长 10s">15 min</option>
+                <option value="3600" disabled title="演示数据时长 10s">60 min</option>
+                <option value="5400" disabled title="演示数据时长 10s">90 min</option>
+                <option value="43200" disabled title="演示数据时长 10s">12 hour</option>
+                <option value="86400" disabled title="演示数据时长 10s">24 hour</option>
               </select>
               <span class="sep"></span>
               <button class="btn" id="btnViewStart" type="button" title="回到起点（Home）">回到起点</button>
               <button class="btn" id="btnPanL" type="button" title="上一窗（←）">◀</button>
               <button class="btn" id="btnPanR" type="button" title="下一窗（→）">▶</button>
               <span class="muted small" id="viewPage" style="white-space:nowrap">${viewStart.toFixed(1)}–${(viewStart + viewSecs).toFixed(1)} s / 全程 ${totalSecs.toFixed(1)} s</span>
-              <input type="range" id="viewNav" class="tb-secondary" min="0" max="${navMax}" step="0.5" value="${Math.min(viewStart, navMax)}" style="flex:1;min-width:100px">
               <span class="sep"></span>
               <select class="select" id="viewGain" style="width:auto" title="振幅灵敏度">
                 <option value="25"${viewGain === 25 ? ' selected' : ''}>25 µV/格</option>
@@ -3075,6 +3548,7 @@ function skeletonPage() {
               <button class="btn tb-secondary ${App.zoomRectMode ? 'primary' : ''}" id="btnZoomRect" type="button" title="框选放大（Z）：拖拽矩形缩放到该范围，Esc 还原">⛶ 框选</button>
               <button class="btn tb-secondary ${App.measureMode ? 'primary' : ''}" id="btnMeasure" type="button" title="测量十字线（M）：悬停读数，单击固定两点计算 Δt/ΔμV">✛ 测量</button>
               <button class="btn-sub tb-secondary" id="btnAnnotate" type="button" title="注释打标（A）：点击波形添加注释">✎ 注释</button>
+              <button class="btn ${App.selectMode ? 'primary' : ''}" id="btnSelectSeg" type="button" title="选段（S）：拖拽选择区间，标记剔除/保留">选段</button>
               <span class="sep"></span>
               <button class="btn-sub tb-secondary" id="btnUseViewport" type="button" title="以当前查看窗口作为分析时间范围">以视窗为分析区间</button>
               <button class="btn-sub tb-secondary" id="btnWaveToggle" type="button">${showAll ? '收起通道（前 6）' : '展开全部通道（' + allCh.length + '）'}</button>
@@ -3084,12 +3558,19 @@ function skeletonPage() {
                 <div class="tb-menu" id="tbMenu" hidden>
                   <label class="muted small" style="display:block">时间导航</label>
                   <input type="range" id="tbMenuNav" min="0" max="${navMax}" step="0.5" value="${Math.min(viewStart, navMax)}" style="width:100%">
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <input class="input" id="tbMenuGoto" type="number" min="0" max="10" step="0.5" placeholder="跳转到秒" style="flex:1">
+                    <button class="btn" id="tbMenuGotoBtn" type="button">跳转</button>
+                  </div>
                   <button class="btn" id="tbMenuUseViewport" type="button">以视窗为分析区间</button>
                   <button class="btn" id="tbMenuWaveToggle" type="button">${showAll ? '收起通道（前 6）' : '展开全部通道（' + allCh.length + '）'}</button>
                   <button class="btn" id="tbMenuEvents" type="button">事件列表</button>
                   <button class="btn" id="tbMenuZoomRect" type="button">框选放大</button>
                   <button class="btn" id="tbMenuMeasure" type="button">测量十字线</button>
                   <button class="btn" id="tbMenuAnnotate" type="button">注释打标</button>
+                  <button class="btn" id="tbMenuSelectSeg" type="button">选段（S）</button>
+                  <button class="btn" id="tbMenuUndo" type="button">撤销选段</button>
+                  <button class="btn" id="tbMenuRedo" type="button">重做选段</button>
                   <button class="btn" id="tbMenuKeys" type="button">快捷键帮助</button>
                   <button class="btn" id="tbMenuInfo" type="button">数据信息</button>
                 </div>
@@ -3097,8 +3578,9 @@ function skeletonPage() {
             </div>
             <div class="preview-canvas" id="previewCanvasWrap">
               ${App.rerefPickMode ? '<div class="pick-bar" id="rerefPickBar">点击波形中的通道行以选择参考通道 <button class="btn-link" id="btnRerefPickCancel" type="button" style="margin-left:8px">取消</button></div>' : ''}
-              ${v1WaveSvgHtml({ channels: waveCh, events: v1DemoEvents(), badSegs: App.badSegs || [], artifactSegs: App.artifactSegs || [], interpSegs: App.interpSegs || [], badChans: v1BadNames(), analysisRange: range, tmpRange: App.tmpRange || null, previewFilter: viewMode === 'preview', seconds: viewSecs, start: viewStart, gain: viewGain, processed: viewMode === 'processed' })}
+              ${v1WaveCanvasHtml()}
               <div class="seg-popover" id="segPopover" hidden></div>
+              <div class="seg-popover" id="selectPopover" hidden></div>
               <div class="tool-overlay" id="zoomRectOverlay" ${App.zoomRectMode ? '' : 'hidden'}>
                 <div id="zoomRectBox" style="position:absolute;border:1px dashed #2a5fae;background:rgba(63,127,214,.15);display:none;pointer-events:none"></div>
               </div>
@@ -3111,6 +3593,11 @@ function skeletonPage() {
                 <div id="annotateTip" style="position:absolute;top:8px;left:8px;padding:6px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;font-size:12px;color:#1e7d46;box-shadow:0 4px 12px rgba(8,20,40,.14);pointer-events:none">注释模式：点击波形位置添加注释（输入文字），Esc 退出</div>
               </div>
             </div>
+            <div class="wave-nav" style="margin-top:8px;display:flex;align-items:center;gap:8px">
+              <span class="muted small" style="white-space:nowrap">时间</span>
+              <input type="range" id="viewNav" min="0" max="${navMax}" step="0.5" value="${Math.min(viewStart, navMax)}" style="flex:1">
+              <span class="muted small" id="viewPage2" style="white-space:nowrap">${viewStart.toFixed(1)}–${(viewStart + viewSecs).toFixed(1)} s / 全程 ${totalSecs.toFixed(1)} s</span>
+            </div>
           </div>
           ${preDockHtml()}
           <div class="dock-backdrop" id="dockBackdrop"></div>
@@ -3120,6 +3607,7 @@ function skeletonPage() {
       ${eventModalHtml()}
       ${keyModalHtml()}
       ${channelModalHtml()}
+      ${exportModalHtml()}
       <div class="btn-row" style="justify-content:space-between">
         <button class="btn" id="btnQuickPrevOverview" type="button">← 上一步：导入文件</button>
         <button class="btn primary" id="btnQuickNextChoose" type="button">下一步：配置分析方案 →</button>
@@ -4258,6 +4746,15 @@ ${qeegSubjectCard}
       if (lbl) lbl.textContent = '位置 ' + App.viewStart.toFixed(1) + '–' + (App.viewStart + (App.viewSecs || 10)).toFixed(1) + ' s';
     });
     if (tbMenuNav) tbMenuNav.addEventListener('change', () => { render(); closeTbMenu(); });
+    const tbMenuGotoBtn = $('tbMenuGotoBtn');
+    if (tbMenuGotoBtn) tbMenuGotoBtn.addEventListener('click', () => {
+      const inp = $('tbMenuGoto');
+      const v = inp ? Number(inp.value) : NaN;
+      if (!Number.isFinite(v)) { toast('请输入 0–10 秒'); return; }
+      App.viewStart = Math.max(0, Math.min(10 - (App.viewSecs || 10), v));
+      render();
+      closeTbMenu();
+    });
     const tbMenuUseViewport = $('tbMenuUseViewport');
     if (tbMenuUseViewport) tbMenuUseViewport.addEventListener('click', () => {
       closeTbMenu();
@@ -4310,6 +4807,16 @@ ${qeegSubjectCard}
         const k = el.getAttribute('data-seg-legend');
         App.segFilter = (App.segFilter || []).indexOf(k) >= 0 ? (App.segFilter || []).filter((x) => x !== k) : (App.segFilter || []).concat([k]);
         render();
+      });
+    });
+    document.querySelectorAll('[data-bp-preset]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const r = el.getAttribute('data-bp-preset');
+        const parts = r.split('–');
+        App.preParams = Object.assign({}, App.preParams || {}, { hp: parts[0] + ' Hz', lp: parts[1] });
+        App.preDirty = true;
+        render();
+        toast('快速带通：' + r + '（已设为预览参数，一键清洗时应用）');
       });
     });
     // 通道管理
@@ -4373,11 +4880,12 @@ ${qeegSubjectCard}
       });
     });
     const updViewPage = () => {
-      const vp = $('viewPage');
-      if (vp) vp.textContent = (App.viewStart || 0).toFixed(1) + '–' + ((App.viewStart || 0) + (App.viewSecs || 10)).toFixed(1) + ' s / 全程 10.0 s';
+      const txt = (App.viewStart || 0).toFixed(1) + '–' + ((App.viewStart || 0) + (App.viewSecs || 10)).toFixed(1) + ' s / 全程 10.0 s';
+      const vp = $('viewPage'); if (vp) vp.textContent = txt;
+      const vp2 = $('viewPage2'); if (vp2) vp2.textContent = txt;
     };
     // 模式切换（框选 / 测量 / 点选互斥）
-    const clearToolModes = () => { App.zoomRectMode = false; App.measureMode = false; App.rerefPickMode = false; App.annotateMode = false; App.measurePts = []; };
+    const clearToolModes = () => { App.zoomRectMode = false; App.measureMode = false; App.rerefPickMode = false; App.annotateMode = false; App.selectMode = false; App.pendingSelect = null; App.measurePts = []; };
     const btnZoomRect = $('btnZoomRect');
     if (btnZoomRect) btnZoomRect.addEventListener('click', () => {
       if (App.zoomRectMode) { clearToolModes(); render(); return; }
@@ -4623,10 +5131,13 @@ ${qeegSubjectCard}
         const b = $('btnMeasure'); if (b) b.click();
       } else if (ev.key === 'a' || ev.key === 'A') {
         const b = $('btnAnnotate'); if (b) b.click();
+      } else if (ev.key === 's' || ev.key === 'S') {
+        const b = $('btnSelectSeg'); if (b) b.click();
       }
     };
     window.addEventListener('keydown', window.__toolbarKey);
     updViewPage();
+    bindWaveCanvas();
     document.removeEventListener('click', window.__tbDocClick);
     window.__tbDocClick = (ev) => {
       if (ev.target && ev.target.id !== 'tbMore' && !(ev.target.closest && ev.target.closest('#tbMenu'))) closeTbMenu();
@@ -4686,19 +5197,71 @@ ${qeegSubjectCard}
       App.preDirty = true;
       render();
     });
+    const applySelectAct = (act) => {
+      const seg = App.pendingSelect;
+      if (!seg) return;
+      App.selectUndo = App.selectUndo || [];
+      App.selectRedo = [];
+      App.selectUndo.push({ type: act, seg: Object.assign({}, seg) });
+      if (act === 'reject') (App.badSegs = App.badSegs || []).push(seg);
+      else if (act === 'remain') (App.remainSegs = App.remainSegs || []).push(seg);
+      App.pendingSelect = null;
+      App.preDirty = true;
+      render();
+      toast((act === 'reject' ? '已标记剔除：' : '已标记保留：') + seg.start.toFixed(1) + '–' + seg.end.toFixed(1) + ' s');
+    };
+    const selectPopover = $('selectPopover');
+    if (selectPopover) selectPopover.addEventListener('click', (ev) => {
+      const t = ev.target;
+      const act = t && t.getAttribute ? t.getAttribute('data-select-act') : null;
+      if (act) applySelectAct(act);
+    });
+    const btnSelectSeg = $('btnSelectSeg');
+    if (btnSelectSeg) btnSelectSeg.addEventListener('click', () => {
+      if (App.selectMode) { App.selectMode = false; render(); return; }
+      clearToolModes();
+      App.selectMode = true;
+      render();
+      toast('选段模式：拖拽选择区间，然后标记剔除或保留；Esc 退出');
+    });
+    const tbMenuSelectSeg = $('tbMenuSelectSeg');
+    if (tbMenuSelectSeg) tbMenuSelectSeg.addEventListener('click', () => { closeTbMenu(); const b = $('btnSelectSeg'); if (b) b.click(); });
+    const undoSelect = () => {
+      const op = (App.selectUndo || []).pop();
+      if (!op) { toast('没有可撤销的选段操作'); return; }
+      App.selectRedo = App.selectRedo || [];
+      App.selectRedo.push(op);
+      if (op.type === 'reject') App.badSegs = (App.badSegs || []).filter((s) => !(Math.abs(s.start - op.seg.start) < 0.001 && Math.abs(s.end - op.seg.end) < 0.001));
+      else App.remainSegs = (App.remainSegs || []).filter((s) => !(Math.abs(s.start - op.seg.start) < 0.001 && Math.abs(s.end - op.seg.end) < 0.001));
+      App.preDirty = true;
+      render();
+    };
+    const redoSelect = () => {
+      const op = (App.selectRedo || []).pop();
+      if (!op) { toast('没有可重做的选段操作'); return; }
+      App.selectUndo = App.selectUndo || [];
+      App.selectUndo.push(op);
+      if (op.type === 'reject') (App.badSegs = App.badSegs || []).push(op.seg);
+      else (App.remainSegs = App.remainSegs || []).push(op.seg);
+      App.preDirty = true;
+      render();
+    };
+    const tbMenuUndo = $('tbMenuUndo');
+    if (tbMenuUndo) tbMenuUndo.addEventListener('click', () => { closeTbMenu(); undoSelect(); });
+    const tbMenuRedo = $('tbMenuRedo');
+    if (tbMenuRedo) tbMenuRedo.addEventListener('click', () => { closeTbMenu(); redoSelect(); });
     // 波形分析区间：手柄拖拽（左/右/整体移动）
     const svgRangeInfo = () => {
-      const svg = $('previewWaveSvg');
-      if (!svg) return null;
-      const r = svg.getBoundingClientRect();
-      if (!r.width) return null;
-      return { r, start: App.viewStart || 0, secs: App.viewSecs || 10 };
+      const m = v1WaveMetrics('eeg');
+      if (!m) return null;
+      return { r: m.r, start: App.viewStart || 0, secs: App.viewSecs || 10, m };
     };
     const rangeTimeFromEvent = (ev) => {
-      const m = svgRangeInfo();
-      if (!m) return null;
-      const vx = ((ev.clientX - m.r.left) / m.r.width) * 980;
-      const t = m.start + ((vx - 74) / 898) * m.secs;
+      const info = svgRangeInfo();
+      if (!info) return null;
+      const m = info.m;
+      const vx = ev.clientX - info.r.left;
+      const t = m.t(vx);
       return Math.max(0, Math.min(10, t));
     };
     const rangeHandles = [['svgRangeL', 'l'], ['svgRangeR', 'r'], ['svgRangeBody', 'b']];
@@ -4758,9 +5321,70 @@ ${qeegSubjectCard}
       normalizeBad();
     });
     const bExport = $('btnPreExport');
-    if (bExport) bExport.addEventListener('click', () => {
-      const v = (App.preVersions || []).length ? App.preVersions[App.preVersions.length - 1].id : '尚未应用预处理';
-      toast('导出处理后数据（' + v + '）：本批为入口演示，不生成真实文件。');
+    const openExport = () => { const d = $('exportModal'), bd = $('exportBackdrop'); if (d) d.hidden = false; if (bd) bd.hidden = false; };
+    const closeExport = () => { const d = $('exportModal'), bd = $('exportBackdrop'); if (d) d.hidden = true; if (bd) bd.hidden = true; };
+    if (bExport) bExport.addEventListener('click', openExport);
+    const btnExportClose = $('btnExportClose');
+    if (btnExportClose) btnExportClose.addEventListener('click', closeExport);
+    const exportBackdrop = $('exportBackdrop');
+    if (exportBackdrop) exportBackdrop.addEventListener('click', closeExport);
+    const downloadTextFile = (name, content, mime) => {
+      const blob = new Blob([content], { type: mime });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 300);
+    };
+    const btnExportRun = $('btnExportRun');
+    if (btnExportRun) btnExportRun.addEventListener('click', () => {
+      const wantPng = $('expPng').checked, wantSvg = $('expSvg').checked, wantCsv = $('expCsv').checked, wantEdf = $('expEdf').checked, wantLog = $('expLog').checked;
+      const tracks = ['eeg', 'emg', 'ecg', 'spectrum'].filter(function (k) { const el = document.querySelector('[data-exp-track="' + k + '"]'); return el && el.checked; });
+      const range = $('expRange').value, dpi = Number($('expDpi').value) || 1;
+      const start = range === 'all' ? 0 : (App.viewStart || 0);
+      const secs = range === 'all' ? 10 : (App.viewSecs || 10);
+      if (wantPng || wantSvg) {
+        const cvs = tracks.map(function (k) { return document.getElementById('waveCanvas_' + k); }).filter(Boolean);
+        if (cvs.length) {
+          const W = Math.max.apply(null, cvs.map((c) => c.width));
+          const H = cvs.reduce((a, c) => a + c.height, 0);
+          const combo = document.createElement('canvas');
+          combo.width = W; combo.height = H;
+          const ctx = combo.getContext('2d');
+          let y = 0;
+          cvs.forEach(function (c) { ctx.drawImage(c, 0, y); y += c.height; });
+          const dataUrl = combo.toDataURL('image/png');
+          if (wantPng) {
+            const a = document.createElement('a'); a.href = dataUrl; a.download = 'qlanalyser_wave_' + Date.now() + '.png'; document.body.appendChild(a); a.click(); a.remove();
+          }
+          if (wantSvg) {
+            const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '"><image href="' + dataUrl + '" width="' + W + '" height="' + H + '"/></svg>';
+            downloadTextFile('qlanalyser_wave_' + Date.now() + '.svg', svg, 'image/svg+xml');
+          }
+        }
+      }
+      if (wantCsv) {
+        const chs = orderedChannels().filter(function (c) {
+          const tr = c.role === 'EMG' ? 'emg' : c.role === 'ECG' ? 'ecg' : 'eeg';
+          return tracks.indexOf(tr) >= 0;
+        });
+        const lines = ['t'];
+        chs.forEach(function (c) { lines[0] += ',' + c.name; });
+        for (let t = start; t <= start + secs; t += 0.02) {
+          let row = t.toFixed(2);
+          chs.forEach(function (c, i) { row += ',' + v1WaveY(t, orderedChannels().indexOf(c), 1).toFixed(4); });
+          lines.push(row);
+        }
+        downloadTextFile('qlanalyser_data_' + Date.now() + '.csv', lines.join('\n'), 'text/csv');
+      }
+      if (wantEdf) toast('EDF 导出需后端处理管线（V2）；原型演示暂不生成真实文件。');
+      if (wantLog) {
+        const log = { preLog: App.preLog || [], preVersions: App.preVersions || [], selectUndo: App.selectUndo || [], badSegs: App.badSegs || [], remainSegs: App.remainSegs || [], params: App.preParams || {} };
+        downloadTextFile('qlanalyser_log_' + Date.now() + '.json', JSON.stringify(log, null, 2), 'application/json');
+      }
+      closeExport();
+      toast('导出完成（PNG/SVG/CSV/日志；EDF 待 V2）');
     });
     const paramKeyMap = { preHp: 'hp', preLp: 'lp', preNotch: 'notch', preBadArt: 'badArt', preArt: 'art', preBadPolicy: 'policy', preIca: 'ica', preReref: 'reref', preBadChan: 'badChan' };
     Object.keys(paramKeyMap).forEach((id) => {
