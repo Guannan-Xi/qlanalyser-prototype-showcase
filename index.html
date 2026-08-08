@@ -67,6 +67,9 @@
   .entry-card .tag { position: absolute; top: 12px; right: 12px; padding: 3px 8px; border-radius: 999px; font-size: 11px; background: var(--primary-soft); color: var(--primary); }
   .entry-card .tag.amber { background: var(--amber-soft); color: var(--amber); }
   .entry-card .tag.ok { background: #e8f7ef; color: #0f9d76; }
+  .entry-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+  .entry-chips span { padding: 2px 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-size: 11px; }
+  .entry-note { margin: 10px 0 0; font-size: 12px; color: var(--subtle); line-height: 1.6; }
   .ob-spotlight { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(8,16,32,.68); z-index: 1200; pointer-events: none; transition: left .22s ease, top .22s ease, width .22s ease, height .22s ease; }
   .ob-tip { position: fixed; z-index: 1201; width: min(420px, 92vw); background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 18px 50px rgba(8,20,40,.35); padding: 16px 18px; }
   .ob-tip h3 { margin: 0 0 6px; font-size: 16px; color: var(--ink); }
@@ -502,13 +505,14 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
         </div>
         <h3>脑电与生理信号分析</h3>
-        <p>以脑电为主，覆盖睡眠、心电、HRV、肌电、癫痫、麻醉与 QEEG；支持快速分析（本地单文件）与项目分析（研究项目）两种模式。</p>
+        <p>睡眠、心电、肌电等生理信号的一站式分析。</p>
+        <div class="entry-chips"><span>睡眠分期</span><span>心电 / HRV</span><span>肌电</span><span>癫痫筛查</span><span>麻醉</span><span>QEEG</span></div>
         <div class="entry-actions">
-          <button class="btn primary" id="btnQuickStart" type="button">开始快速分析 →</button>
-          <button class="btn" id="btnFullStart" type="button">项目分析 →</button>
+          <button class="btn primary" id="btnQuickStart" type="button">快速分析</button>
+          <button class="btn" id="btnFullStart" type="button">项目管理</button>
           <button class="entry-link" id="btnQuickDemo" type="button">演示模式：自动走完流程</button>
         </div>
-        <p class="sub" id="fullDesc" style="margin:10px 0 0;font-size:12px;color:var(--subtle)">项目分析登录后启用：按 项目 → 受试者 → 数据 组织研究数据。</p>
+        <p class="entry-note" id="fullDesc">快速：本地单文件 · 项目：登录后按项目归档</p>
       </div>
       <div class="entry-card" id="entrySim">
         <span class="tag amber">V2 · 规划中</span>
@@ -516,11 +520,13 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg>
         </div>
         <h3>建模与仿真</h3>
-        <p>脑刺激电场 FEM 仿真：任务配置 → 刺激建模 → 求解 → 剂量 → 三维可视化 → 报告；支持快速分析（临时试算）与项目管理（仿真方案），规划在 V2 提供。</p>
+        <p>脑刺激电场仿真，从任务配置到报告。</p>
+        <div class="entry-chips"><span>FEM 求解</span><span>标准头模</span><span>个体 MRI</span><span>三维可视化</span></div>
         <div class="entry-actions">
-          <button class="btn" id="btnSimStart" type="button">快速分析（临时试算）</button>
-          <button class="btn" id="btnSimProj" type="button">项目管理（仿真方案）</button>
+          <button class="btn" id="btnSimStart" type="button">快速分析</button>
+          <button class="btn" id="btnSimProj" type="button">项目管理</button>
         </div>
+        <p class="entry-note">快速：临时试算 · 项目：仿真方案归档</p>
       </div>
       <div class="entry-card" id="entrySpike">
         <span class="tag amber">V3 · 规划中</span>
@@ -528,11 +534,13 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>
         </div>
         <h3>单元放电分析（Spike）</h3>
-        <p>单细胞/多单元放电：聚类 → 质量门控 → 放电统计 → 事件锁定（PSTH）；接入 ECoG/SEEG；支持快速分析与项目管理（受试者/会话），规划在 V3 提供。</p>
+        <p>单细胞放电数据，从聚类到事件锁定。</p>
+        <div class="entry-chips"><span>ECoG / SEEG</span><span>Kilosort</span><span>质量门控</span><span>PSTH</span></div>
         <div class="entry-actions">
           <button class="btn" id="btnSpikeStart" type="button">快速分析</button>
-          <button class="btn" id="btnSpikeProj" type="button">项目管理（受试者/会话）</button>
+          <button class="btn" id="btnSpikeProj" type="button">项目管理</button>
         </div>
+        <p class="entry-note">快速：单文件临时分析 · 项目：受试者/会话归档</p>
       </div>
     </div>
   </div>
@@ -911,7 +919,7 @@
   function renderLaunch() {
     $('quickTag').textContent = 'V1 · 本地可用';
     const fullDesc = $('fullDesc');
-    if (fullDesc) fullDesc.textContent = App.loggedIn ? '项目分析已启用：按 项目 → 受试者 → 数据 组织研究数据。' : '项目分析登录后启用：按 项目 → 受试者 → 数据 组织研究数据。';
+    if (fullDesc) fullDesc.textContent = App.loggedIn ? '快速：本地单文件 · 项目：已登录，按项目归档' : '快速：本地单文件 · 项目：登录后按项目归档';
     const demoBtn = $('btnQuickDemo');
     if (demoBtn) { demoBtn.disabled = false; demoBtn.hidden = !App.teaching; }
     const cover = $('coverAccount');
@@ -4748,7 +4756,7 @@ ${qeegSubjectCard}
   /* ============ 新人教学模式（蒙版+高亮，内置模拟数据） ============ */
   const OB_STEPS = [
     { sel: '#entryQuick', title: '能力域入口', text: '产品按能力域分三个模块：脑电与生理信号分析（V1 可用）、建模与仿真（V2 规划中）、单元放电分析（V3 规划中）。' },
-    { sel: '#btnQuickStart', title: '进入主工作台', text: '点击「开始快速分析」进入脑电与生理信号分析工作台；教学将使用内置模拟数据走通完整流程。' },
+    { sel: '#btnQuickStart', title: '进入主工作台', text: '点击「快速分析」进入脑电与生理信号分析工作台；教学将使用内置模拟数据走通完整流程。' },
     { sel: '#demoDataCard', title: '载入内置示例数据', text: '教学模式下内置模拟记录。请点击「人 · 整夜睡眠」，一键载入示例文件。', prepare: () => { if (App.workspaceMode !== 'quick') enterQuick(); } },
     { sel: '#preApplyNote', title: '数据概览与预处理', text: '确认文件信息；参数按「工作区间 / 滤波 / 伪迹阈值」分组，改动后显示“将应用”摘要。点击「应用预处理」生成处理版本。', prepare: () => navigate('q-overview') },
     { sel: '#presetSection', title: '配置分析方案', text: '在这里选择预置分析方案（如人 · 整夜睡眠）或自定义组合；运行将在本步骤内完成。', prepare: () => navigate('q-choose', { focus: 'preset' }) },
