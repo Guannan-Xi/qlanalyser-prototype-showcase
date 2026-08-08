@@ -94,6 +94,10 @@
   .account-avatar { width: 32px; height: 32px; flex: none; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #80acd8, #284880); color: #fff; font-size: 14px; font-weight: 600; }
   .account-capsule-text { font-size: 13px; font-weight: 600; display: block; }
   .account-capsule-sub { display: block; font-size: 11px; color: rgba(234,241,246,.72); margin-top: 1px; }
+  .drawer-backdrop { position: fixed; inset: 0; background: rgba(15,25,35,.35); z-index: 70; }
+  .drawer-right { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 94vw); background: #fff; z-index: 71; box-shadow: -12px 0 36px rgba(8,20,40,.22); overflow-y: auto; padding: 20px 22px; border-left: 1px solid var(--border); }
+  .drawer-right h3 { margin: 0 0 10px; }
+  .viewer-toolbar .btn { padding: 5px 10px; min-height: 30px; font-size: 12px; }
   .entry-link:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
 
   .launch-top { position: absolute; top: 24px; right: 32px; display: flex; gap: 10px; align-items: center; }
@@ -1351,20 +1355,26 @@ function skeletonPage() {
     const events = opts.events || [];
     const badSegs = opts.badSegs || [];
     const secs = opts.seconds || 10;
+    const start = opts.start || 0;
+    const gain = opts.gain || 100;
+    const processed = !!opts.processed;
     const rowH = 36, labelW = 66, pad = 8, topH = 26;
-    const W = 980, H = topH + channels.length * rowH + 30;
+    const W = 980, H = topH + channels.length * rowH + 34;
     const x0 = labelW + pad, x1 = W - pad, plotW = x1 - x0;
-    const px = (t) => x0 + (t / secs) * plotW;
+    const px = (t) => x0 + ((t - start) / secs) * plotW;
+    const ampScale = (gain / 100) * (rowH / 2 - 8) * 0.9;
     let out = '';
-    out += '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;background:#fbfcfe;border:1px solid var(--border);border-radius:8px" role="img" aria-label="示例波形预览">';
-    out += '<text x="' + pad + '" y="' + (topH - 8) + '" font-size="12" fill="#556b80">' + (App.teaching ? '示例波形（确定性数据，非真实记录）' : '波形预览') + ' · 时窗 0–' + secs + ' s</text>';
+    out += '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;background:#fbfcfe;border:1px solid var(--border);border-radius:8px" role="img" aria-label="原始波形预览">';
+    out += '<text x="' + pad + '" y="' + (topH - 8) + '" font-size="12" fill="#556b80">' + (App.teaching ? '示例波形（确定性数据，非真实记录）' : '原始波形') + (processed ? ' · 处理版本（已清洗）' : ' · 原始') + ' · 时窗 ' + start.toFixed(1) + '–' + (start + secs).toFixed(1) + ' s · ±' + gain + ' µV/格</text>';
     for (const e of events) {
       const ex = px(e.t);
+      if (ex < x0 || ex > x1) continue;
       out += '<line x1="' + ex.toFixed(1) + '" y1="' + topH + '" x2="' + ex.toFixed(1) + '" y2="' + (H - 22) + '" stroke="' + (e.kind === 'spike' ? '#e46a50' : '#3f7fd6') + '" stroke-width="1" stroke-dasharray="4 3" opacity="0.55"/>';
       out += '<text x="' + (ex + 3).toFixed(1) + '" y="' + (topH - 3) + '" font-size="11" fill="' + (e.kind === 'spike' ? '#e46a50' : '#3f7fd6') + '">' + e.label + '</text>';
     }
     for (const b of badSegs) {
-      const bx0 = px(b.start), bx1 = px(b.end);
+      const bx0 = px(Math.max(start, b.start)), bx1 = px(Math.min(start + secs, b.end));
+      if (bx1 < x0 || bx0 > x1) continue;
       out += '<rect x="' + bx0.toFixed(1) + '" y="' + topH + '" width="' + Math.max(2, bx1 - bx0).toFixed(1) + '" height="' + (H - 22 - topH) + '" fill="#e46a50" opacity="0.16"/>';
     }
     channels.forEach((ch, i) => {
@@ -1374,18 +1384,20 @@ function skeletonPage() {
       out += '<line x1="' + x0 + '" y1="' + yMid + '" x2="' + x1 + '" y2="' + yMid + '" stroke="#e3ebf3" stroke-width="1"/>';
       let d = '';
       for (let xi = 0; xi <= plotW; xi += 3) {
-        const t = (xi / plotW) * secs;
-        const y = yMid - (v1WaveY(t, i, 1) / (ch.amp || 100)) * (rowH / 2 - 6);
+        const t = start + (xi / plotW) * secs;
+        let v = v1WaveY(t, i, 1);
+        if (processed) v = v * 0.55 - Math.sin(2 * Math.PI * 0.7 * t) * 0.12;
+        const y = yMid - v * ampScale;
         d += (xi === 0 ? 'M' : 'L') + (x0 + xi).toFixed(1) + ' ' + y.toFixed(1);
       }
       out += '<path d="' + d + '" fill="none" stroke="' + (ch.role === 'EMG' ? '#8b5cf6' : '#2856a0') + '" stroke-width="1.2"/>';
     });
     out += '<line x1="' + x0 + '" y1="' + (H - 20) + '" x2="' + x1 + '" y2="' + (H - 20) + '" stroke="#b9c7d6" stroke-width="1"/>';
     for (let g = 0; g <= 5; g++) {
-      const t = (g * secs) / 5, gx = px(t);
+      const t = start + (g * secs) / 5, gx = px(t);
       out += '<text x="' + gx.toFixed(1) + '" y="' + (H - 7) + '" font-size="11" fill="#66798c" text-anchor="middle">' + t.toFixed(0) + 's</text>';
     }
-    out += '<text x="' + (x1 - 6) + '" y="' + (H - 7) + '" font-size="11" fill="#66798c" text-anchor="end">±100 µV（EMG ±200）</text>';
+    out += '<text x="' + (x1 - 6) + '" y="' + (H - 7) + '" font-size="11" fill="#66798c" text-anchor="end">±' + gain + ' µV/格</text>';
     out += '</svg>';
     return out;
   }
@@ -2537,24 +2549,26 @@ function skeletonPage() {
     const histSummary = latest
       ? '当前 ' + latest.id + (lastLog ? ' · 最近 ' + lastLog.time + ' ' + lastLog.action : '')
       : '无版本' + (lastLog ? ' · 最近 ' + lastLog.time + ' ' + lastLog.action : ' · 暂无操作');
+    const chCount = v1DemoChannels().length;
+    const icaDefault = chCount >= 32 ? '使用' : '不使用';
+    const cleanMode = App.cleanMode || 'auto';
     return `
-      <div class="card" style="padding:16px 18px">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <h3 style="margin:0">预处理（共享）</h3>
+      <div class="drawer-backdrop" id="preBackdrop" hidden></div>
+      <div class="drawer-right" id="preDrawer" hidden>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <h3 style="margin:0">数据清洗与预处理</h3>
           <span class="badge gray">${latest ? latest.id : '原始'}</span>
-          <span style="flex:1"></span>
-          <span class="muted small">模板</span>
-          <select class="select" id="preTpl" style="width:auto;min-width:190px">
-            <option value="">手动配置（默认）</option>
-            <option value="erp" title="事件相关电位（ERP）：适用于事件锁时分析，保留低频成分">ERP 标准预处理（v1.0）</option>
-            <option value="rest">静息态标准预处理（v1.0）</option>
-          </select>
+          <button class="btn" id="btnPreClose" type="button">关闭</button>
         </div>
-        <p class="muted small" style="margin:6px 0 0">预置参数（0.5/70/50 等）以 D-02 定版为准，应用后自动记录参数版本。</p>
-        <h4 class="pre-group">工作区间</h4>
+        <div class="auth-tabs" style="margin-top:12px">
+          <button class="auth-tab ${cleanMode === 'auto' ? 'on' : ''}" id="modeAuto" type="button">自动清洗</button>
+          <button class="auth-tab ${cleanMode === 'manual' ? 'on' : ''}" id="modeManual" type="button">手动清洗</button>
+        </div>
+        <div class="notice info" style="margin:10px 0 0">自动模式使用推荐参数一键清洗并生成 QC 报告；手动模式按算子逐步执行；两者共用同一算子链，结果可复现。</div>
+        <h4 class="pre-group">分析时间范围</h4>
         <div class="grid-2">
-          <div class="field"><span>工作区间开始</span><input class="input" id="preStart" value="00:00:00"></div>
-          <div class="field"><span>工作区间结束</span><input class="input" id="preEnd" value="06:12:00"></div>
+          <div class="field"><span>开始</span><input class="input" id="preStart" value="00:00:00"></div>
+          <div class="field"><span>结束</span><input class="input" id="preEnd" value="06:12:00"></div>
         </div>
         <h4 class="pre-group">滤波</h4>
         <div class="grid-2" style="grid-template-columns:repeat(3,1fr)">
@@ -2562,15 +2576,24 @@ function skeletonPage() {
           <div class="field"><span>低通（Hz）</span><select class="select" id="preLp"><option>70 Hz</option><option>45 Hz</option><option>关闭</option></select></div>
           <div class="field"><span>陷波</span><select class="select" id="preNotch"><option>50 Hz</option><option>60 Hz</option><option>关闭</option></select></div>
         </div>
-        <h4 class="pre-group">伪迹阈值</h4>
+        <h4 class="pre-group">去噪与伪迹</h4>
         <div class="grid-2">
-          <div class="field"><span>坏段检测阈值（μV）</span><input class="input" id="preBadArt" type="number" value="200"></div>
-          <div class="field"><span>伪迹剔除阈值（μV）</span><input class="input" id="preArt" type="number" value="200"></div>
+          <div class="field"><span>振幅去噪阈值（µV）</span><input class="input" id="preArt" type="number" value="200"></div>
+          <div class="field"><span>坏段检测阈值（µV）</span><input class="input" id="preBadArt" type="number" value="200"></div>
+          <div class="field"><span>坏段处理</span><select class="select" id="preBadPolicy"><option>完全删除</option><option>用 0 替代</option></select></div>
+          <div class="field"><span>ICA 伪迹去除</span><select class="select" id="preIca"><option>自动（${icaDefault}）</option><option>使用</option><option>不使用</option></select></div>
         </div>
-        <div class="muted small" id="preApplyNote" style="margin:8px 0 0">将应用：HP 0.5 / LP 70 / 陷波 50 / 区间 00:00:00–06:12:00 · 坏段 0 段（应用后波形更新为新版本，原版本保留）</div>
+        <p class="muted small" style="margin:0">ICA 自动判断：通道数 ≥32 默认使用，<32 默认不使用；成分判读需人工确认。</p>
+        <h4 class="pre-group">参考与坏道</h4>
+        <div class="grid-2">
+          <div class="field"><span>重参考</span><select class="select" id="preReref"><option>平均参考</option><option>双极参考</option><option>不重参考</option></select></div>
+          <div class="field"><span>坏道插值</span><select class="select" id="preBadChan"><option>启用（球形插值）</option><option>关闭</option></select></div>
+        </div>
+        <h4 class="pre-group">自动 QC 摘要</h4>
+        <div id="qcSummary" class="muted small" style="padding:8px 10px;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px">尚未运行 QC；点击「一键自动清洗」后生成噪声 / 振幅 / 坏道 / 坏段报告。</div>
+        <div class="muted small" id="preApplyNote" style="margin:8px 0 0">将应用：HP 0.5 / LP 70 / 陷波 50 / 分析时间范围 00:00:00–06:12:00 · 坏段处理：完全删除 · ICA：自动（不使用）</div>
         <div class="btn-row" style="justify-content:space-between;align-items:center;margin-top:10px">
-          <button class="btn primary" id="btnPreApply" type="button">应用预处理（生成新版本）</button>
-          <span class="muted small">导出绑定当前参数快照</span>
+          <button class="btn primary" id="btnPreApply" type="button">${cleanMode === 'auto' ? '一键自动清洗（生成版本）' : '应用当前步骤（生成版本）'}</button>
           <button class="btn-link" id="btnPreExport" type="button" style="font-size:13px">导出处理后数据 →</button>
         </div>
         <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
@@ -2590,6 +2613,30 @@ function skeletonPage() {
       </div>`;
   }
 
+  function infoDrawerHtml() {
+    const qf = App.quickFile;
+    const d = DEMO.quick;
+    return `
+      <div class="drawer-backdrop" id="infoBackdrop" hidden></div>
+      <div class="drawer-right" id="infoDrawer" hidden>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <h3 style="margin:0">数据信息</h3>
+          <button class="btn" id="btnInfoClose" type="button">关闭</button>
+        </div>
+        ${table([
+          ['文件', qf ? qf.name : d.file],
+          ['大小', qf ? qf.sizeText : d.size],
+          ['格式', 'EDF+（标准）'],
+          ['通道', d.ch],
+          ['采样率', d.rate],
+          ['时长', d.dur],
+          ['记录起始', '2026-08-06 21:00:00'],
+          ['内容哈希', 'sha256:9f3a…c21d'],
+          ['工作副本', '已建立（原始文件未修改）']
+        ])}
+      </div>`;
+  }
+
   function quickOverviewPage() {
     const qf = App.quickFile;
     const d = DEMO.quick;
@@ -2598,56 +2645,59 @@ function skeletonPage() {
     const showAll = !!App.overviewAllCh;
     const waveCh = showAll ? allCh : allCh.slice(0, 6);
     const qcOk = !!(App.importState && App.importState.ok);
+    const viewStart = App.viewStart || 0;
+    const viewSecs = App.viewSecs || 10;
+    const viewGain = App.viewGain || 100;
+    const viewVersion = App.viewVersion || 'raw';
+    const latest = pre.length ? pre[pre.length - 1].id : null;
+    const totalSecs = 10;
+    const navMax = Math.max(0, totalSecs - viewSecs);
     return `
       <div class="page-head">
-        <div><h2>数据概览与预处理</h2><p class="desc">确认文件信息，配置共享预处理并生成处理版本。</p></div>
+        <div><h2>原始数据</h2><p class="desc">观察原始波形，按需打开数据信息与数据清洗抽屉。</p></div>
       </div>
       ${quickSteps(2)}
-      <div class="card" style="padding:16px 18px">
+      <div class="card" style="padding:14px 16px">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:14px;font-weight:600;color:#284880">${qf ? qf.name : d.file}</span>
-          <span class="badge gray">${d.dur}</span>
-          <span class="badge gray">${d.ch}</span>
           <span class="badge gray">${d.rate}</span>
+          <span class="badge gray">${d.ch}</span>
+          <span class="badge gray">${d.dur}</span>
           <span class="badge ${qcOk ? 'ok' : 'warn'}">${qcOk ? '校验通过' : '待校验'}</span>
+          <span class="badge gray">${viewVersion === 'processed' && latest ? latest : '原始'}</span>
+          <span class="muted small" id="viewPosLabel">位置 ${viewStart.toFixed(1)}–${(viewStart + viewSecs).toFixed(1)} s</span>
           <span style="flex:1"></span>
-          <button class="btn" id="btnDataInfo2" type="button">数据信息</button>
+          <button class="btn" id="btnInfoDrawer" type="button">数据信息</button>
+          <button class="btn" id="btnPreDrawer" type="button">数据清洗与预处理</button>
         </div>
-        <div style="position:relative;margin-top:12px;max-height:340px;overflow:auto">
-          ${v1WaveSvgHtml({ channels: waveCh, events: v1DemoEvents(), badSegs: App.badSegs || [] })}
-        </div>
-        <div style="text-align:right;margin-top:6px">
+        <div class="viewer-toolbar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <span class="muted small">时间</span>
+          <button class="btn" id="btnZoomOut" type="button" title="缩小时间范围">−</button>
+          <button class="btn" id="btnZoomIn" type="button" title="放大时间范围">＋</button>
+          <button class="btn" id="btnPanL" type="button">◀</button>
+          <button class="btn" id="btnPanR" type="button">▶</button>
+          <button class="btn" id="btnViewReset" type="button">回到全程</button>
+          <input type="range" id="viewNav" min="0" max="${navMax}" step="0.5" value="${Math.min(viewStart, navMax)}" style="flex:1;min-width:120px">
+          <span class="muted small">增益</span>
+          <select class="select" id="viewGain" style="width:auto">
+            <option value="25"${viewGain === 25 ? ' selected' : ''}>25 µV/格</option>
+            <option value="50"${viewGain === 50 ? ' selected' : ''}>50 µV/格</option>
+            <option value="100"${viewGain === 100 ? ' selected' : ''}>100 µV/格</option>
+            <option value="200"${viewGain === 200 ? ' selected' : ''}>200 µV/格</option>
+          </select>
+          <button class="btn" id="btnViewToggle" type="button">${viewVersion === 'processed' ? '查看原始' : '查看处理版本'}</button>
           <button class="btn" id="btnWaveToggle" type="button" style="padding:4px 10px;font-size:12px">${showAll ? '收起通道（前 6）' : '展开全部通道（' + allCh.length + '）'}</button>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-          <span class="muted small" style="width:66px;flex:none">坏段标记</span>
-          <div id="badSegStrip" style="display:flex;gap:2px;height:18px;flex:1;margin-left:8px"></div>
-          <span class="muted small" id="badSegStatus" style="white-space:nowrap">尚未标记坏段。</span>
+        <div style="position:relative;margin-top:10px;max-height:420px;overflow:auto">
+          ${v1WaveSvgHtml({ channels: waveCh, events: v1DemoEvents(), badSegs: App.badSegs || [], seconds: viewSecs, start: viewStart, gain: viewGain, processed: viewVersion === 'processed' })}
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-          <button class="btn-link" id="btnBadUndo" type="button" disabled>撤销</button>
-          <button class="btn-link" id="btnBadRedo" type="button" disabled>重做</button>
-          <button class="btn-link" id="btnBadClear" type="button" disabled>清空标记</button>
-          <span class="muted small" style="margin-left:66px">点击或拖拽时间条标记坏段；标红=待剔除，与波形时间轴对齐。</span>
-        </div>
-        <div id="badSegList" style="margin-top:6px"></div>
+        <p class="muted small" style="margin:6px 0 0">缩放 / 平移 / 增益仅调整显示；「分析时间范围」在数据清洗抽屉中设置。</p>
       </div>
+      ${infoDrawerHtml()}
       ${prePanelHtml()}
-      <div class="overlay" id="dataInfoOverlay2" hidden>
-        <div class="modal">
-          <h3>数据信息</h3>
-          ${table([
-            ['来源', qf ? '本地文件' : '示例文件', qf ? qf.name : d.file],
-            ['大小 / 修改时间', qf ? qf.sizeText : d.size, qf ? qf.modifiedText : '—'],
-            ['通道 / 采样率', d.ch, d.rate],
-            ['时长', d.dur, '示例'],
-          ])}
-          <div class="btn-row" style="justify-content:flex-end"><button class="btn" id="btnDataInfoClose2" type="button">关闭</button></div>
-        </div>
-      </div>
       <div class="btn-row" style="justify-content:space-between">
         <button class="btn" id="btnQuickPrevOverview" type="button">← 上一步：导入文件</button>
-        <button class="btn primary" id="btnQuickNextChoose" type="button">下一步：预置方案 →</button>
+        <button class="btn primary" id="btnQuickNextChoose" type="button">下一步：配置分析方案 →</button>
       </div>
       ${boundaryNote()}`;
   }
@@ -2946,7 +2996,7 @@ ${qeegSubjectCard}
         <p class="small muted" style="margin:8px 0 0">Z 分数 / 常模对照随登录后项目管理启用（常模版本待 Q-QEEG-04）；本视图内容来自本次运行输出。</p>
       </div>` : ''}
       <div class="btn-row" style="justify-content:space-between">
-        <button class="btn" id="btnQuickPrevResult" type="button">← 上一步：自定义分析</button>
+        <button class="btn" id="btnQuickPrevResult" type="button">← 上一步：配置分析方案</button>
       </div>
       ${boundaryNote()}`;
   }
@@ -3581,10 +3631,13 @@ ${qeegSubjectCard}
       const start = $('preStart') ? $('preStart').value : '00:00:00';
       const end = $('preEnd') ? $('preEnd').value : '06:12:00';
       const badN = (App.badSegs || []).length;
+      const policy = $('preBadPolicy') ? $('preBadPolicy').value : '完全删除';
+      const ica = $('preIca') ? $('preIca').value : '自动';
+      const reref = $('preReref') ? $('preReref').value : '平均参考';
       const dirty = !!(App.preDirty || badN);
       el.className = dirty ? 'small pre-note-warn' : 'muted small';
       el.style.cssText = 'margin:8px 0 0;' + (dirty ? 'padding:6px 9px;background:#fff7e6;border:1px solid #e8c36a;border-radius:6px;color:#7a6218' : '');
-      el.innerHTML = (dirty ? '<b>有未应用更改 · </b>' : '将应用：') + 'HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' / 区间 ' + start + '–' + end + ' · 坏段 ' + (badN ? badN + ' 段' : '0 段') + '（应用后波形更新为新版本，原版本保留）';
+      el.innerHTML = (dirty ? '<b>有未应用更改 · </b>' : '将应用：') + 'HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' / 分析时间范围 ' + start + '–' + end + ' · 坏段处理 ' + policy + ' · ICA ' + ica + ' · ' + reref + '（应用后波形更新为新版本，原版本保留）';
     };
     const preTpl = $('preTpl');
     if (preTpl) preTpl.addEventListener('change', () => {
@@ -3611,15 +3664,23 @@ ${qeegSubjectCard}
       const badInfo = (App.badSegs || []).length ? (App.badSegs.length + ' 段 / ' + App.badSegs.reduce((a, b) => a + (b.end - b.start), 0).toFixed(1) + 's') : '无';
       const start = $('preStart') ? $('preStart').value : '00:00:00';
       const end = $('preEnd') ? $('preEnd').value : '06:12:00';
+      const policy = $('preBadPolicy') ? $('preBadPolicy').value : '完全删除';
+      const ica = $('preIca') ? $('preIca').value : '自动';
+      const reref = $('preReref') ? $('preReref').value : '平均参考';
+      const badchan = $('preBadChan') ? $('preBadChan').value : '启用（球形插值）';
       const now = new Date().toLocaleTimeString('zh-CN', { hour12: false });
-      App.preVersions.push({ id: 'Preprocess-' + n, tpl, summary: 'HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' / 坏段 ' + bad + 'μV / 伪迹 ' + art + 'μV / 区间 ' + start + '–' + end + ' / 坏段 ' + badInfo + '（参数版本 pre-D02）', appliedAt: '2026-08-06 ' + now });
-      App.preLog.push({ time: '2026-08-06 ' + now, action: '应用共享预处理', summary: '区间 ' + start + '–' + end + ' · HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' · 坏段 ' + badInfo + '（参数版本 pre-D02）', version: 'Preprocess-' + n });
+      const actionName = (App.cleanMode === 'auto' ? '一键自动清洗' : '应用清洗步骤');
+      App.preVersions.push({ id: 'Preprocess-' + n, tpl, summary: 'HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' / 坏段 ' + bad + 'μV / 伪迹 ' + art + 'μV / 分析时间范围 ' + start + '–' + end + ' / 坏段处理 ' + policy + ' / ICA ' + ica + ' / ' + reref + ' / ' + badchan + '（参数版本 pre-D02）', appliedAt: '2026-08-06 ' + now });
+      App.preLog.push({ time: '2026-08-06 ' + now, action: actionName, summary: '分析时间范围 ' + start + '–' + end + ' · HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' · 坏段处理 ' + policy + ' · ICA ' + ica + '（参数版本 pre-D02）', version: 'Preprocess-' + n });
       App.badSegs = [];
       App.preUndo = [];
       App.preRedo = [];
       App.preDirty = false;
+      App.viewVersion = 'processed';
+      const qc = $('qcSummary');
+      if (qc) qc.innerHTML = '<b>QC 摘要：</b>噪声 3.2% · 振幅超标段 0 · 坏道 1（Cz 已插值）· 坏段 2 段（' + policy + '）· ICA ' + ica + '；参数快照已写入版本。';
       render();
-      toast('已生成处理版本 Preprocess-' + n + '（不可变，不覆盖旧版本）；当前标记已写入版本并清空，如需修改请生成新版本。');
+      toast('已生成清洗版本 Preprocess-' + n + '（不可变，不覆盖旧版本）；可在查看器中对比原始/处理版本。');
     });
     // 批次①：坏段条（点击/拖拽标记）与撤销/重做/清空/导出
     const renderBadSegs = () => {
@@ -3700,6 +3761,64 @@ ${qeegSubjectCard}
       App.overviewAllCh = !App.overviewAllCh;
       render();
     });
+    const btnZoomIn = $('btnZoomIn');
+    if (btnZoomIn) btnZoomIn.addEventListener('click', () => {
+      App.viewSecs = Math.max(1, (App.viewSecs || 10) / 1.6);
+      App.viewStart = Math.min(App.viewStart || 0, 10 - App.viewSecs);
+      render();
+    });
+    const btnZoomOut = $('btnZoomOut');
+    if (btnZoomOut) btnZoomOut.addEventListener('click', () => {
+      App.viewSecs = Math.min(30, (App.viewSecs || 10) * 1.6);
+      App.viewStart = Math.min(App.viewStart || 0, 10 - App.viewSecs);
+      render();
+    });
+    const btnPanL = $('btnPanL');
+    if (btnPanL) btnPanL.addEventListener('click', () => {
+      const s = App.viewSecs || 10;
+      App.viewStart = Math.max(0, (App.viewStart || 0) - s * 0.25);
+      render();
+    });
+    const btnPanR = $('btnPanR');
+    if (btnPanR) btnPanR.addEventListener('click', () => {
+      const s = App.viewSecs || 10;
+      App.viewStart = Math.min(10 - s, (App.viewStart || 0) + s * 0.25);
+      render();
+    });
+    const btnViewReset = $('btnViewReset');
+    if (btnViewReset) btnViewReset.addEventListener('click', () => { App.viewStart = 0; App.viewSecs = 10; render(); });
+    const viewNav = $('viewNav');
+    if (viewNav) {
+      viewNav.addEventListener('input', () => {
+        App.viewStart = Number(viewNav.value) || 0;
+        const lbl = $('viewPosLabel');
+        if (lbl) lbl.textContent = '位置 ' + App.viewStart.toFixed(1) + '–' + (App.viewStart + (App.viewSecs || 10)).toFixed(1) + ' s';
+      });
+      viewNav.addEventListener('change', () => render());
+    }
+    const viewGainSel = $('viewGain');
+    if (viewGainSel) viewGainSel.addEventListener('change', () => { App.viewGain = Number(viewGainSel.value) || 100; render(); });
+    const btnViewToggle = $('btnViewToggle');
+    if (btnViewToggle) btnViewToggle.addEventListener('click', () => {
+      App.viewVersion = App.viewVersion === 'processed' ? 'raw' : 'processed';
+      render();
+    });
+    const btnInfoDrawer = $('btnInfoDrawer');
+    if (btnInfoDrawer) btnInfoDrawer.addEventListener('click', () => { $('infoDrawer').hidden = false; $('infoBackdrop').hidden = false; });
+    const btnInfoClose = $('btnInfoClose');
+    if (btnInfoClose) btnInfoClose.addEventListener('click', () => { $('infoDrawer').hidden = true; $('infoBackdrop').hidden = true; });
+    const infoBackdrop = $('infoBackdrop');
+    if (infoBackdrop) infoBackdrop.addEventListener('click', () => { $('infoDrawer').hidden = true; $('infoBackdrop').hidden = true; });
+    const btnPreDrawer = $('btnPreDrawer');
+    if (btnPreDrawer) btnPreDrawer.addEventListener('click', () => { $('preDrawer').hidden = false; $('preBackdrop').hidden = false; });
+    const btnPreClose = $('btnPreClose');
+    if (btnPreClose) btnPreClose.addEventListener('click', () => { $('preDrawer').hidden = true; $('preBackdrop').hidden = true; });
+    const preBackdrop = $('preBackdrop');
+    if (preBackdrop) preBackdrop.addEventListener('click', () => { $('preDrawer').hidden = true; $('preBackdrop').hidden = true; });
+    const modeAuto = $('modeAuto');
+    if (modeAuto) modeAuto.addEventListener('click', () => { App.cleanMode = 'auto'; render(); });
+    const modeManual = $('modeManual');
+    if (modeManual) modeManual.addEventListener('click', () => { App.cleanMode = 'manual'; render(); });
     const preHistoryToggle = $('preHistoryToggle');
     if (preHistoryToggle) preHistoryToggle.addEventListener('click', () => {
       const body = $('preHistoryBody'), arrow = $('preHistoryArrow');
@@ -3741,7 +3860,7 @@ ${qeegSubjectCard}
       const v = (App.preVersions || []).length ? App.preVersions[App.preVersions.length - 1].id : '尚未应用预处理';
       toast('导出处理后数据（' + v + '）：本批为入口演示，不生成真实文件。');
     });
-    ['preHp', 'preLp', 'preNotch', 'preBadArt', 'preArt', 'preStart', 'preEnd'].forEach((id) => {
+    ['preHp', 'preLp', 'preNotch', 'preBadArt', 'preArt', 'preStart', 'preEnd', 'preBadPolicy', 'preIca', 'preReref', 'preBadChan'].forEach((id) => {
       const el = $(id);
       if (el) el.addEventListener('change', () => { if ((App.preVersions || []).length) App.preDirty = true; updatePreApplyNote(); });
     });
@@ -4895,7 +5014,7 @@ ${qeegSubjectCard}
     { sel: '#entryQuick', title: '能力域入口', text: '产品按能力域分三个模块：脑电与生理信号分析（可用）、建模与仿真（待开放）、单元放电分析（待开放）。' },
     { sel: '#btnQuickStart', title: '进入主工作台', text: '点击「快速分析」进入脑电与生理信号分析工作台；教学将使用内置模拟数据走通完整流程。' },
     { sel: '#demoDataCard', title: '载入内置示例数据', text: '教学模式下内置模拟记录。请点击「人 · 整夜睡眠」，一键载入示例文件。', prepare: () => { if (App.workspaceMode !== 'quick') enterQuick(); } },
-    { sel: '#preApplyNote', title: '数据概览与预处理', text: '确认文件信息；参数按「工作区间 / 滤波 / 伪迹阈值」分组，改动后显示“将应用”摘要。点击「应用预处理」生成处理版本。', prepare: () => navigate('q-overview') },
+    { sel: '#preApplyNote', title: '数据清洗与预处理', text: '原始数据确认后，打开右侧「数据清洗与预处理」抽屉：自动模式一键清洗（含 QC 摘要），手动模式按算子逐步执行；改动后显示“将应用”摘要。点击「一键自动清洗」生成处理版本。', prepare: () => { navigate('q-overview'); setTimeout(() => { const d = $('preDrawer'); const bd = $('preBackdrop'); if (d) d.hidden = false; if (bd) bd.hidden = false; }, 120); } },
     { sel: '#presetSection', title: '配置分析方案', text: '在这里选择预置分析方案（如人 · 整夜睡眠）或自定义组合；运行将在本步骤内完成。', prepare: () => navigate('q-choose', { focus: 'preset' }) },
     { sel: '#btnQuickExport', title: '结果复核与导出', text: '运行完成后，结果版本在这里查看、复核并导出结果包。教学到此完成，退出后界面不再出现教学与演示内容。', prepare: () => navigate('q-result') }
   ];
