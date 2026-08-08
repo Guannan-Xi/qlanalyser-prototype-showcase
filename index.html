@@ -61,28 +61,28 @@
 
   .entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; width: min(920px, 100%); align-items: stretch; }
   .entry-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(1180px, 100%); }
-  .entry-card { position: relative; display: flex; flex-direction: column; background: #fff; color: var(--ink); border: 1px solid var(--border); border-radius: 14px; padding: 24px; cursor: pointer; box-shadow: 0 12px 32px rgba(8,20,40,.22); transition: transform .15s, box-shadow .15s, border-color .15s, opacity .15s; }
+  .entry-card { position: relative; display: flex; flex-direction: column; background: #fff; color: var(--ink); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px 20px; cursor: pointer; box-shadow: 0 12px 32px rgba(8,20,40,.22); transition: transform .15s, box-shadow .15s, border-color .15s, opacity .15s; }
   .entry-card { height: 100%; }
   .entry-card:hover:not(.disabled) { border-color: var(--primary); box-shadow: 0 16px 40px rgba(8,20,40,.28); transform: translateY(-3px); }
   .entry-card.disabled { opacity: .5; cursor: not-allowed; }
-  .entry-card .tag { position: absolute; top: 12px; right: 12px; padding: 3px 8px; border-radius: 999px; font-size: 11px; background: var(--primary-soft); color: var(--primary); }
+  .entry-card .tag { position: absolute; top: 14px; right: 14px; padding: 3px 8px; border-radius: 999px; font-size: 11px; background: var(--primary-soft); color: var(--primary); }
   .entry-card .tag.amber { background: var(--amber-soft); color: var(--amber); }
   .entry-card .tag.ok { background: #e8f7ef; color: #0f9d76; }
   .entry-chips { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; margin: 0 0 14px; min-height: 46px; }
   .entry-chips span { padding: 2px 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-size: 11px; }
-  .entry-note { margin: auto 0 0; padding-top: 12px; font-size: 12px; color: var(--subtle); line-height: 1.6; }
+  .entry-note { margin: 14px 0 0; padding-top: 12px; border-top: 1px dashed var(--border); font-size: 12px; color: var(--subtle); line-height: 1.6; min-height: calc(1.6em * 2); }
   .ob-spotlight { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(8,16,32,.68); z-index: 1200; pointer-events: none; transition: left .22s ease, top .22s ease, width .22s ease, height .22s ease; }
 .ob-tip { position: fixed; z-index: 1201; width: min(420px, 92vw); background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 18px 50px rgba(8,20,40,.35); padding: 16px 18px; }
   .ob-tip h3 { margin: 0 0 6px; font-size: 16px; color: var(--ink); }
   .ob-tip p { margin: 0 0 12px; font-size: 13px; line-height: 1.7; color: var(--subtle); }
   .ob-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .ob-count { font-size: 12px; color: var(--muted); font-weight: 600; }
-  .entry-icon { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg, #80acd8, #284880); color: #fff; margin-bottom: 14px; box-shadow: 0 3px 8px rgba(40,72,128,.22); }
-  .entry-card h3 { margin: 0 0 10px; font-size: 17px; line-height: 1.4; min-height: calc(1.4em * 2); }
-  .entry-card p { margin: 0 0 18px; color: var(--subtle); font-size: 13px; line-height: 1.7; min-height: calc(1.7em * 2); }
-  .entry-actions { display: flex; flex-direction: column; gap: 6px; }
-  .entry-actions .btn { width: 100%; }
-  .entry-link { border: 0; background: none; color: var(--primary); font-size: 13px; cursor: pointer; padding: 6px 0 0; align-self: center; }
+  .entry-icon { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg, #80acd8, #284880); color: #fff; margin: 6px 0 14px; box-shadow: 0 3px 8px rgba(40,72,128,.22); }
+  .entry-card h3 { margin: 0 0 8px; font-size: 17px; line-height: 1.4; min-height: calc(1.4em * 2); }
+  .entry-card p { margin: 0 0 20px; color: var(--subtle); font-size: 13px; line-height: 1.7; min-height: calc(1.7em * 2); }
+  .entry-actions { display: flex; flex-direction: row; gap: 10px; margin-top: auto; }
+  .entry-actions .btn { flex: 1; width: auto; }
+  .entry-link { border: 0; background: none; color: var(--primary); font-size: 12px; cursor: pointer; display: block; margin: 10px auto 0; padding: 2px 8px; }
   .entry-link:hover { text-decoration: underline; }
   .entry-link:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
 
@@ -487,7 +487,8 @@ padding: 16px;
           <button class="btn primary" id="btnQuickStart" type="button">快速分析</button>
           <button class="btn" id="btnFullStart" type="button">项目管理</button>
         </div>
-        <p class="entry-note" id="fullDesc">快速：本地单文件即时分析 · 项目：研究项目数据批量管理与分析 <button class="entry-link" id="btnQuickDemo" type="button">演示模式</button></p>
+        <button class="entry-link" id="btnQuickDemo" type="button">演示模式</button>
+        <p class="entry-note" id="fullDesc">快速：本地单文件即时分析 · 项目：研究项目数据批量管理与分析</p>
       </div>
       <div class="entry-card" id="entrySim">
         <span class="tag amber">待开放</span>
@@ -500,6 +501,7 @@ padding: 16px;
           <button class="btn" id="btnSimStart" type="button">快速分析</button>
           <button class="btn" id="btnSimProj" type="button">项目管理</button>
         </div>
+        <button class="entry-link" type="button" tabindex="-1" aria-hidden="true" style="visibility:hidden">演示模式</button>
         <p class="entry-note">快速：临时试算 · 项目：仿真方案批量管理与分析</p>
       </div>
       <div class="entry-card" id="entrySpike">
@@ -513,6 +515,7 @@ padding: 16px;
           <button class="btn" id="btnSpikeStart" type="button">快速分析</button>
           <button class="btn" id="btnSpikeProj" type="button">项目管理</button>
         </div>
+        <button class="entry-link" type="button" tabindex="-1" aria-hidden="true" style="visibility:hidden">演示模式</button>
         <p class="entry-note">快速：单文件即时分析 · 项目：受试者/会话批量管理与分析</p>
       </div>
     </div>
@@ -894,7 +897,7 @@ padding: 16px;
     const fullDesc = $('fullDesc');
     if (fullDesc) fullDesc.textContent = App.loggedIn ? '快速：本地单文件即时分析 · 项目：研究项目数据批量管理与分析' : '快速：本地单文件即时分析 · 项目：研究项目数据批量管理与分析';
     const demoBtn = $('btnQuickDemo');
-    if (demoBtn) { demoBtn.disabled = false; demoBtn.hidden = !App.teaching; }
+    if (demoBtn) { demoBtn.disabled = false; demoBtn.style.visibility = App.teaching ? 'visible' : 'hidden'; }
     const cover = $('coverAccount');
     const loginBtn = $('btnLoginToggle');
     if (cover) cover.textContent = App.loggedIn ? App.account.email : '未登录';
