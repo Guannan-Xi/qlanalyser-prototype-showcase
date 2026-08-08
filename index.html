@@ -516,9 +516,10 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg>
         </div>
         <h3>建模与仿真</h3>
-        <p>脑刺激电场 FEM 仿真：任务配置 → 刺激建模 → 求解 → 剂量 → 三维可视化 → 报告；独立流程，规划在 V2 提供。</p>
+        <p>脑刺激电场 FEM 仿真：任务配置 → 刺激建模 → 求解 → 剂量 → 三维可视化 → 报告；支持快速分析（临时试算）与项目管理（仿真方案），规划在 V2 提供。</p>
         <div class="entry-actions">
-          <button class="btn" id="btnSimStart" type="button">查看仿真工作台 →</button>
+          <button class="btn" id="btnSimStart" type="button">快速分析（临时试算）</button>
+          <button class="btn" id="btnSimProj" type="button">项目管理（仿真方案）</button>
         </div>
       </div>
       <div class="entry-card" id="entrySpike">
@@ -527,9 +528,10 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>
         </div>
         <h3>单元放电分析（Spike）</h3>
-        <p>单细胞/多单元放电：聚类 → 质量门控 → 放电统计 → 事件锁定（PSTH）；接入 ECoG/SEEG，规划在 V3 提供。</p>
+        <p>单细胞/多单元放电：聚类 → 质量门控 → 放电统计 → 事件锁定（PSTH）；接入 ECoG/SEEG；支持快速分析与项目管理（受试者/会话），规划在 V3 提供。</p>
         <div class="entry-actions">
-          <button class="btn" id="btnSpikeStart" type="button">查看 Spike 工作台 →</button>
+          <button class="btn" id="btnSpikeStart" type="button">快速分析</button>
+          <button class="btn" id="btnSpikeProj" type="button">项目管理（受试者/会话）</button>
         </div>
       </div>
     </div>
@@ -790,8 +792,10 @@
     'c-qeeg':     { label: 'QEEG 工作台',         role: 'customer', workspaceMode: 'full',  featureFlag: 'qeeg',  kind: 'qeegWorkbench' },
     'c-project':  { label: '项目详情',           role: 'customer', workspaceMode: 'full',  featureFlag: 'core',  kind: 'projectDetail' },
     'c-profile':  { label: '个人中心',           role: 'customer', workspaceMode: 'full',  featureFlag: 'core',  kind: 'skeleton' },
-    'c-sim':      { label: '建模与仿真',          role: 'customer', workspaceMode: 'full',  featureFlag: 'sim',   kind: 'sim' },
-    'c-spike':    { label: '单元放电分析（Spike）', role: 'customer', workspaceMode: 'full',  featureFlag: 'spike', kind: 'spike' }
+    'c-sim':      { label: '快速分析（临时试算）',  role: 'customer', workspaceMode: 'full',  featureFlag: 'sim',   kind: 'sim' },
+    'c-spike':    { label: '快速分析',           role: 'customer', workspaceMode: 'full',  featureFlag: 'spike', kind: 'spike' },
+    'c-sim-projects':    { label: '仿真项目',    role: 'customer', workspaceMode: 'full',  featureFlag: 'sim',   kind: 'simProjects' },
+    'c-spike-projects':  { label: 'Spike 项目',  role: 'customer', workspaceMode: 'full',  featureFlag: 'spike', kind: 'spikeProjects' }
   };
 
   const NAV = {
@@ -809,8 +813,8 @@
     },
     customer: { group: '项目管理',     items: ['c-overview', 'c-data', 'c-workflow', 'c-results'] },
     more:     { group: '更多',         items: ['c-profile'] },
-    sim:      { group: '建模与仿真',    items: ['c-sim'] },
-    spike:    { group: '单元放电分析',  items: ['c-spike'] }
+    sim:      { group: '建模与仿真',    items: ['c-sim-projects', 'c-sim'] },
+    spike:    { group: '单元放电分析',  items: ['c-spike-projects', 'c-spike'] }
   };
 
   const HOME_BY_ROLE = { customer: 'c-overview' };
@@ -920,9 +924,9 @@
     const groups = [];
     if (App.workspaceMode === 'quick') {
       groups.push(NAV.quick);
-    } else if (App.activeRoute === 'c-sim') {
+    } else if (App.activeRoute === 'c-sim' || App.activeRoute === 'c-sim-projects') {
       groups.push(NAV.sim);
-    } else if (App.activeRoute === 'c-spike') {
+    } else if (App.activeRoute === 'c-spike' || App.activeRoute === 'c-spike-projects') {
       groups.push(NAV.spike);
     } else {
       groups.push(NAV[App.currentRole] || NAV.customer);
@@ -946,8 +950,8 @@
         }).join('')}
       </nav>`).join('');
     $('roleSubtitle').textContent = App.workspaceMode === 'quick' ? '快速分析工作区'
-      : App.activeRoute === 'c-sim' ? '建模与仿真 · V2 规划中'
-      : App.activeRoute === 'c-spike' ? '单元放电分析 · V3 规划中'
+      : (App.activeRoute === 'c-sim' || App.activeRoute === 'c-sim-projects') ? '建模与仿真 · V2 规划中'
+      : (App.activeRoute === 'c-spike' || App.activeRoute === 'c-spike-projects') ? '单元放电分析 · V3 规划中'
       : roleLabel() + ' · 项目分析';
     if (App.workspaceMode === 'quick') {
       $('footRole').textContent = '本地临时工作区';
@@ -2823,6 +2827,48 @@ ${qeegSubjectCard}
       ${boundaryNote()}`;
   }
 
+  function simProjectsPage() {
+    const rows = [
+      ['PJ-SIM-2026-001', 'TMS 电场验证 · 标准头模', '标准头模方案', '已完成 · 报告可导出', '2026-08-06'],
+      ['PJ-SIM-2026-002', '个体 MRI 队列', '个体 MRI 方案', '2/3 求解中', '2026-08-07']
+    ].map((r) => '<tr>' + r.map((c) => '<td>' + c + '</td>').join('') + '</tr>').join('');
+    return `
+      <div class="page-head">
+        <div><h2>仿真项目 <span class="badge plan">V2 · 规划中</span></h2><p class="desc">以「仿真方案」为资产组织：项目 → 仿真方案 → 求解任务 → 剂量/报告。</p></div>
+      </div>
+      <div class="notice warn"><b>V2 规划中。</b>当前为产品示意，不执行真实求解。</div>
+      <div class="card">
+        <h3>项目列表</h3>
+        ${rows.length ? '<table class="table"><thead><tr><th>项目</th><th>名称</th><th>方案</th><th>状态</th><th>更新</th></tr></thead><tbody>' + rows + '</tbody></table>' : '<p class="muted small">暂无仿真项目。</p>'}
+        <div class="btn-row" style="justify-content:flex-start;margin-top:0">
+          <button class="btn primary" id="btnSimNewProject" type="button">新建仿真项目</button>
+          <button class="btn" id="btnSimToQuick" type="button">快速分析（临时试算）</button>
+        </div>
+      </div>
+      ${boundaryNote()}`;
+  }
+
+  function spikeProjectsPage() {
+    const rows = [
+      ['PJ-SPK-2026-001', '皮层阵列纵向记录', 'S01 · session-20260801', '已完成 · 聚类 48 单元', '2026-08-06'],
+      ['PJ-SPK-2026-002', 'ECoG 任务态', 'S02 · session-20260805', '门控复核中', '2026-08-07']
+    ].map((r) => '<tr>' + r.map((c) => '<td>' + c + '</td>').join('') + '</tr>').join('');
+    return `
+      <div class="page-head">
+        <div><h2>Spike 项目 <span class="badge plan">V3 · 规划中</span></h2><p class="desc">按 项目 → 受试者 → 会话记录 组织数据；EEG 与 Spike 可挂同一次 session 跨模态对齐。</p></div>
+      </div>
+      <div class="notice warn"><b>V3 规划中。</b>当前为产品示意，不执行真实检测。</div>
+      <div class="card">
+        <h3>项目列表</h3>
+        ${rows.length ? '<table class="table"><thead><tr><th>项目</th><th>名称</th><th>受试者 / 会话</th><th>状态</th><th>更新</th></tr></thead><tbody>' + rows + '</tbody></table>' : '<p class="muted small">暂无 Spike 项目。</p>'}
+        <div class="btn-row" style="justify-content:flex-start;margin-top:0">
+          <button class="btn primary" id="btnSpikeNewProject" type="button">新建 Spike 项目</button>
+          <button class="btn" id="btnSpikeToQuick" type="button">快速分析</button>
+        </div>
+      </div>
+      ${boundaryNote()}`;
+  }
+
   function simPage() {
     const isMri = App.simScheme === 'mri';
     const standardSteps = ['任务配置', '刺激建模', '求解', '剂量', '三维可视化', '报告'];
@@ -2881,8 +2927,10 @@ ${qeegSubjectCard}
         <h3>三维视图</h3>
         <div class="placeholder-box">三维视图：头模与电场分布渲染区域（V2 版本提供）</div>
       </div>
+      <div class="notice info" style="margin-top:12px"><b>临时会话 · 未归档</b>：当前为仿真试算，不保存；确认结果后可「转正式项目」保存为仿真方案。</div>
       <div style="display:flex;gap:10px;margin-top:14px">
-        <button class="btn primary" id="btnBackAnalysis" type="button">← 返回分析</button>
+        <button class="btn primary" id="btnSimSaveProject" type="button">转正式项目（保存为仿真方案）</button>
+        <button class="btn" id="btnBackAnalysis" type="button">← 返回分析</button>
       </div>
       ${boundaryNote()}`;
   }
@@ -2920,8 +2968,10 @@ ${qeegSubjectCard}
         <h3>数据接入预留</h3>
         <p class="muted small" style="margin:0">ECoG / SEEG 数据接入，规划在 V3 提供。</p>
       </div>
+      <div class="notice info" style="margin-top:12px"><b>临时会话 · 未归档</b>：当前为 Spike 快速分析，不保存；确认结果后可「转正式项目」挂载受试者与会话记录。</div>
       <div style="display:flex;gap:10px;margin-top:14px">
-        <button class="btn primary" id="btnBackAnalysis2" type="button">← 返回分析</button>
+        <button class="btn primary" id="btnSpikeSaveProject" type="button">转正式项目（挂载受试者/会话）</button>
+        <button class="btn" id="btnBackAnalysis2" type="button">← 返回分析</button>
       </div>
       ${boundaryNote()}`;
   }
@@ -3058,7 +3108,9 @@ ${qeegSubjectCard}
       r.kind === 'qeegWorkbench' ? qeegWorkbenchPage() :
       r.kind === 'dataQuality' ? dataQualityPage() :
       r.kind === 'sim' ? simPage() :
-      r.kind === 'spike' ? spikePage() : skeletonPage();
+      r.kind === 'spike' ? spikePage() :
+      r.kind === 'simProjects' ? simProjectsPage() :
+      r.kind === 'spikeProjects' ? spikeProjectsPage() : skeletonPage();
   }
 
   function render() {
@@ -3258,6 +3310,24 @@ ${qeegSubjectCard}
     const b1 = $('btnBackAnalysis'), b2 = $('btnBackAnalysis2');
     if (b1) b1.addEventListener('click', () => navigate('c-workflow'));
     if (b2) b2.addEventListener('click', () => navigate('c-workflow'));
+    const btnSimSaveProject = $('btnSimSaveProject');
+    if (btnSimSaveProject) btnSimSaveProject.addEventListener('click', () => {
+      enterWorkbench('c-sim-projects');
+      toast('已保存为仿真方案（原型演示：方案已进入仿真项目列表）');
+    });
+    const btnSpikeSaveProject = $('btnSpikeSaveProject');
+    if (btnSpikeSaveProject) btnSpikeSaveProject.addEventListener('click', () => {
+      enterWorkbench('c-spike-projects');
+      toast('已挂载受试者/会话（原型演示：结果已进入 Spike 项目）');
+    });
+    const btnSimNewProject = $('btnSimNewProject');
+    if (btnSimNewProject) btnSimNewProject.addEventListener('click', () => toast('新建仿真项目：V2 规划中，当前为原型占位'));
+    const btnSpikeNewProject = $('btnSpikeNewProject');
+    if (btnSpikeNewProject) btnSpikeNewProject.addEventListener('click', () => toast('新建 Spike 项目：V3 规划中，当前为原型占位'));
+    const btnSimToQuick = $('btnSimToQuick');
+    if (btnSimToQuick) btnSimToQuick.addEventListener('click', () => enterWorkbench('c-sim'));
+    const btnSpikeToQuick = $('btnSpikeToQuick');
+    if (btnSpikeToQuick) btnSpikeToQuick.addEventListener('click', () => enterWorkbench('c-spike'));
     const btnSimDemo = $('btnSimDemo');
     if (btnSimDemo) btnSimDemo.addEventListener('click', () => {
       clearInterval(App._simTimer);
@@ -4774,8 +4844,10 @@ ${qeegSubjectCard}
   $('btnQuickDemo').addEventListener('click', (e) => { e.stopPropagation(); demoQuickFlow(); });
   $('entrySim').addEventListener('click', () => enterWorkbench('c-sim'));
   $('btnSimStart').addEventListener('click', (e) => { e.stopPropagation(); enterWorkbench('c-sim'); });
+  $('btnSimProj').addEventListener('click', (e) => { e.stopPropagation(); enterWorkbench('c-sim-projects'); });
   $('entrySpike').addEventListener('click', () => enterWorkbench('c-spike'));
   $('btnSpikeStart').addEventListener('click', (e) => { e.stopPropagation(); enterWorkbench('c-spike'); });
+  $('btnSpikeProj').addEventListener('click', (e) => { e.stopPropagation(); enterWorkbench('c-spike-projects'); });
   $('btnFullStart').addEventListener('click', (e) => { e.stopPropagation(); enterFull(); });
 
   /* ============ 新人教学模式绑定 ============ */
