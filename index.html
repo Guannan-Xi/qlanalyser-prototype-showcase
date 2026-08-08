@@ -88,6 +88,12 @@
   .auth-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
   .auth-tab { flex: 1; padding: 7px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: #fff; color: var(--muted); font-size: 13px; cursor: pointer; transition: all .15s ease; }
   .auth-tab.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .sidebar-foot { padding: 10px 12px; border-top: 1px solid rgba(255,255,255,.09); }
+  .account-capsule { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; background: rgba(255,255,255,.05); color: var(--nav-text); cursor: pointer; text-align: left; transition: background .15s ease; }
+  .account-capsule:hover { background: rgba(255,255,255,.12); }
+  .account-avatar { width: 32px; height: 32px; flex: none; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #80acd8, #284880); color: #fff; font-size: 14px; font-weight: 600; }
+  .account-capsule-text { font-size: 13px; font-weight: 600; display: block; }
+  .account-capsule-sub { display: block; font-size: 11px; color: rgba(234,241,246,.72); margin-top: 1px; }
   .entry-link:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
 
   .launch-top { position: absolute; top: 24px; right: 32px; display: flex; gap: 10px; align-items: center; }
@@ -573,6 +579,70 @@ padding: 16px;
     </div>
   </div>
 
+  <!-- ===== 账号菜单 ===== -->
+  <div class="overlay" id="accountMenu" hidden>
+    <div class="modal" style="width:min(360px,92vw)">
+      <h3>账号</h3>
+      <div class="btn-row" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:0">
+        <button class="btn" id="acctProfile" type="button">个人中心</button>
+        <button class="btn" id="acctSettings" type="button">设置</button>
+        <button class="btn" id="acctHelp" type="button">帮助与关于</button>
+        <button class="btn" id="acctLogout" type="button">退出登录</button>
+      </div>
+      <div class="btn-row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="acctClose" type="button">关闭</button></div>
+    </div>
+  </div>
+
+  <!-- ===== 设置 ===== -->
+  <div class="overlay" id="settingsOverlay" hidden>
+    <div class="modal" style="width:min(560px,94vw)">
+      <h3>设置</h3>
+      <div class="card" style="margin-top:12px"><h3>数据与存储</h3>
+        <div class="field"><span>工作区路径</span><input class="input" value="D:\QLanalyser\Workspace" readonly></div>
+        <p class="muted small" style="margin:0 0 8px">V1.5 起开放修改；当前仅展示。</p>
+        <div class="btn-row" style="justify-content:flex-start;margin-top:0"><button class="btn" id="btnCacheClear" type="button">清理缓存</button></div>
+      </div>
+      <div class="card"><h3>分析与导出</h3>
+        <div class="grid-2">
+          <div class="field"><span>默认预处理模板</span><select class="select" id="setPreTpl"><option>手动配置</option><option>静息态标准预处理</option><option>ERP 标准预处理</option></select></div>
+          <div class="field"><span>默认导出格式</span><select class="select" id="setExport"><option>标准结果包（ZIP）</option><option>CSV + 图表</option><option>自定义组合</option></select></div>
+        </div>
+      </div>
+      <div class="card"><h3>界面偏好</h3>
+        <div class="grid-2">
+          <div class="field"><span>语言</span><select class="select" id="setLang"><option>简体中文</option></select></div>
+          <div class="field"><span>主题</span><select class="select" id="setTheme"><option>浅色</option><option>深色（规划中）</option></select></div>
+          <div class="field"><span>单位</span><select class="select" id="setUnit"><option>µV</option><option>V</option></select></div>
+        </div>
+      </div>
+      <div class="btn-row" style="justify-content:flex-end;margin-top:0">
+        <button class="btn" id="settingsCancel" type="button">关闭</button>
+        <button class="btn primary" id="settingsSave" type="button">保存偏好</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 帮助与关于 ===== -->
+  <div class="overlay" id="helpOverlay" hidden>
+    <div class="modal" style="width:min(560px,94vw)">
+      <h3>帮助与关于</h3>
+      <div class="card" style="margin-top:12px"><h3>帮助</h3>
+        <div class="btn-row" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:0">
+          <button class="btn" id="btnHelpDoc" type="button">帮助文档</button>
+          <button class="btn" id="btnHelpFeedback" type="button">问题反馈</button>
+          <button class="btn" id="btnHelpTour" type="button">重新进入教学模式</button>
+        </div>
+      </div>
+      <div class="card"><h3>隐私与数据策略</h3>
+        <p class="muted small" style="margin:0">分析数据与结果仅保存在本机；登录状态为原型演示，不涉及真实账号服务。</p>
+      </div>
+      <div class="card"><h3>关于</h3>
+        <p class="muted small" style="margin:0">QLanalyser 1.0.0-beta-L（原型）· 仅供科研参考，不用于临床诊断。</p>
+      </div>
+      <div class="btn-row" style="justify-content:flex-end;margin-top:0"><button class="btn" id="helpClose" type="button">关闭</button></div>
+    </div>
+  </div>
+
   <!-- ===== 新人教学模式（蒙版+高亮） ===== -->
   <div class="overlay" id="obWelcome" hidden>
     <div class="modal" style="max-width:520px">
@@ -652,9 +722,13 @@ padding: 16px;
       </div>
       <div class="nav-groups" id="navGroups"></div>
       <div class="sidebar-foot">
-        <span id="footRole">本地科研账户</span>
-        <strong id="footName">全澜脑科学研究组</strong>
-        <span id="footEmail">demo.customer@quanlan.cn</span>
+        <button class="account-capsule" id="accountCapsule" type="button">
+          <span class="account-avatar" id="accountAvatar">客</span>
+          <span>
+            <span class="account-capsule-text" id="accountCapsuleText">登录</span>
+            <span class="account-capsule-sub" id="accountCapsuleSub">本地模式 · 数据不出本机</span>
+          </span>
+        </button>
       </div>
     </aside>
     <section class="workspace">
@@ -976,16 +1050,11 @@ if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模�
       : (App.activeRoute === 'c-sim' || App.activeRoute === 'c-sim-projects') ? '建模与仿真 · V2 规划中'
       : (App.activeRoute === 'c-spike' || App.activeRoute === 'c-spike-projects') ? '单元放电分析 · V3 规划中'
       : roleLabel() + ' · 项目分析';
-    if (App.workspaceMode === 'quick') {
-      const foot = document.querySelector('.sidebar-foot');
-      if (foot) foot.style.display = 'none';
-    } else {
-      const foot = document.querySelector('.sidebar-foot');
-      if (foot) foot.style.display = 'flex';
-      $('footRole').textContent = App.deploymentMode === 'online' ? '在线 · 科研账户' : '本地 · 科研账户';
-      $('footName').textContent = App.account.name;
-      $('footEmail').textContent = App.account.email;
-    }
+    const capName = App.account && (App.account.name || App.account.email) ? (App.account.name || App.account.email) : '';
+    const capText = $('accountCapsuleText'), capAvatar = $('accountAvatar'), capSub = $('accountCapsuleSub');
+    if (capText) capText.textContent = App.loggedIn ? (capName || '个人中心') : '登录';
+    if (capAvatar) capAvatar.textContent = App.loggedIn ? (capName || '客').charAt(0) : '客';
+    if (capSub) capSub.textContent = App.workspaceMode === 'quick' ? '本地模式 · 数据不出本机' : (App.loggedIn ? App.account.email : '未登录');
   }
 
   function renderTopbar() {
@@ -1205,9 +1274,10 @@ if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模�
       <div class="page-head">
         <div><h2>个人中心</h2><p class="desc">账号信息与密码管理。</p></div>
       </div>
+      <div class="notice info"><b>本地模式 · 数据不出本机。</b>分析数据与结果仅保存在本机。</div>
       <div class="card">
         <h3>账号信息</h3>
-        ${table([['账号', App.account.email || '未登录'], ['昵称', App.account.name || '—'], ['角色', '科研用户']])}
+        ${table([['账号', App.account.email || '未登录'], ['昵称', App.account.name || '—'], ['角色', '科研用户'], ['版本', '1.0.0-beta-L（原型）']])}
       </div>
       <div class="card">
         <h3>修改密码</h3>
@@ -1220,6 +1290,11 @@ if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模�
           <button class="btn primary" id="btnPfSave" type="button">保存新密码</button>
           <button class="btn" id="btnLogout" type="button">退出登录</button>
         </div>
+      </div>
+      <div class="card">
+        <h3>关于</h3>
+        <p class="muted small" style="margin:0 0 10px">QLanalyser 1.0.0-beta-L（原型）· 仅供科研参考，不用于临床诊断。</p>
+        <div class="btn-row" style="justify-content:flex-start;margin-top:0"><button class="btn" id="btnAboutOpen" type="button">关于与帮助</button></div>
       </div>
       ${boundaryNote()}`;
   }
@@ -3395,6 +3470,8 @@ ${qeegSubjectCard}
       exitToLaunch();
       toast('已退出登录');
     });
+    const btnAboutOpen = $('btnAboutOpen');
+    if (btnAboutOpen) btnAboutOpen.addEventListener('click', () => { $('helpOverlay').hidden = false; });
     const btnSimDemo = $('btnSimDemo');
     if (btnSimDemo) btnSimDemo.addEventListener('click', () => {
       clearInterval(App._simTimer);
@@ -4948,7 +5025,7 @@ ${qeegSubjectCard}
     App.account.email = acct;
     App.loggedIn = true;
     loginOverlay.hidden = true;
-    renderLaunch();
+    render();
     toast('登录成功：项目管理已启用');
   });
   function showAuth(which) {
@@ -4978,7 +5055,7 @@ ${qeegSubjectCard}
     App.account = { name: name || '科研用户', email: acct };
     App.loggedIn = true;
     loginOverlay.hidden = true;
-    renderLaunch();
+    render();
     toast('注册成功：项目管理已启用');
   });
   $('forgotBack').addEventListener('click', () => showAuth('login'));
@@ -4988,6 +5065,36 @@ ${qeegSubjectCard}
     toast('重置链接已发送至 ' + acct + '（原型演示）');
     showAuth('login');
   });
+  $('accountCapsule').addEventListener('click', () => {
+    if (App.loggedIn) { $('accountMenu').hidden = false; } else { loginOverlay.hidden = false; showAuth('login'); }
+  });
+  $('acctClose').addEventListener('click', () => { $('accountMenu').hidden = true; });
+  $('acctProfile').addEventListener('click', () => {
+    $('accountMenu').hidden = true;
+    if (App.workspaceMode !== 'full') openFullWorkspace();
+    navigate('c-profile');
+  });
+  $('acctSettings').addEventListener('click', () => { $('accountMenu').hidden = true; $('settingsOverlay').hidden = false; });
+  $('acctHelp').addEventListener('click', () => { $('accountMenu').hidden = true; $('helpOverlay').hidden = false; });
+  $('acctLogout').addEventListener('click', () => {
+    $('accountMenu').hidden = true;
+    App.loggedIn = false;
+    exitToLaunch();
+    toast('已退出登录');
+  });
+  $('settingsCancel').addEventListener('click', () => { $('settingsOverlay').hidden = true; });
+  $('settingsSave').addEventListener('click', () => { $('settingsOverlay').hidden = true; toast('偏好已保存（原型演示）'); });
+  $('btnCacheClear').addEventListener('click', () => toast('缓存已清理（原型演示）'));
+  $('helpClose').addEventListener('click', () => { $('helpOverlay').hidden = true; });
+  $('btnHelpDoc').addEventListener('click', () => toast('帮助文档（原型占位）'));
+  $('btnHelpFeedback').addEventListener('click', () => toast('反馈已提交（原型占位）'));
+  $('btnHelpTour').addEventListener('click', () => {
+    try { localStorage.removeItem('ql_ob_v1'); } catch (e) { /* 忽略 */ }
+    $('helpOverlay').hidden = true;
+    exitToLaunch();
+    setTimeout(startOb, 350);
+  });
+  $('btnHelp').addEventListener('click', () => { $('helpOverlay').hidden = false; });
   const btnReset = $('btnReset');
   if (btnReset) btnReset.addEventListener('click', resetDemo);
   $('btnExit').addEventListener('click', exitToLaunch);
