@@ -660,10 +660,10 @@ padding: 16px;
     <section class="workspace">
       <header class="topbar">
         <h1 id="pageTitle">工作台</h1>
-        <span class="cap-tag" id="capTag">本地</span>
+        <span class="cap-tag" id="capTag">V1</span>
         <span class="spacer"></span>
-        <span class="account-chip" id="accountChip">未登录</span>
-        <button class="btn" id="btnHelp" type="button">帮助</button> <button class="btn" id="btnReset" type="button">重置演示数据</button>
+        <span class="account-chip" id="accountChip"></span>
+        <button class="btn" id="btnHelp" type="button">帮助</button>
         <button class="btn" id="btnExit" type="button">退出到启动页</button>
       </header>
       <div class="page-root" id="pageRoot"></div>
@@ -921,12 +921,12 @@ padding: 16px;
   }
 
   function capabilityText() {
-    return App.workspaceMode === 'quick' ? '本地' : roleLabel();
+    return App.workspaceMode === 'quick' ? 'V1' : roleLabel();
   }
 
   function accountText() {
-    if (!App.workspaceMode) return '未登录';
-    if (App.workspaceMode === 'quick') return '本地临时工作区 · 未登录';
+    if (!App.workspaceMode) return '';
+    if (App.workspaceMode === 'quick') return '';
     return (App.loggedIn ? '已登录 · ' + App.account.email : '未登录') + ' · ' + App.account.name;
   }
 
@@ -972,15 +972,16 @@ padding: 16px;
           return `<button class="nav-btn ${isParentActive ? 'active' : ''}" data-route="${item.route}" type="button">${item.label}</button>${subs}`;
         }).join('')}
       </nav>`).join('');
-    $('roleSubtitle').textContent = App.workspaceMode === 'quick' ? '快速分析工作区'
+    $('roleSubtitle').textContent = App.workspaceMode === 'quick' ? '分析工作区'
       : (App.activeRoute === 'c-sim' || App.activeRoute === 'c-sim-projects') ? '建模与仿真 · V2 规划中'
       : (App.activeRoute === 'c-spike' || App.activeRoute === 'c-spike-projects') ? '单元放电分析 · V3 规划中'
       : roleLabel() + ' · 项目分析';
     if (App.workspaceMode === 'quick') {
-      $('footRole').textContent = '本地临时工作区';
-      $('footName').textContent = '未登录';
-      $('footEmail').textContent = '数据仅保存在本机';
+      const foot = document.querySelector('.sidebar-foot');
+      if (foot) foot.style.display = 'none';
     } else {
+      const foot = document.querySelector('.sidebar-foot');
+      if (foot) foot.style.display = 'flex';
       $('footRole').textContent = App.deploymentMode === 'online' ? '在线 · 科研账户' : '本地 · 科研账户';
       $('footName').textContent = App.account.name;
       $('footEmail').textContent = App.account.email;
@@ -992,7 +993,7 @@ padding: 16px;
     pageTitle.textContent = r
       ? (r.featureFlag === 'sim' ? '仿真（脑刺激电场）V2 · 规划中'
         : r.featureFlag === 'spike' ? 'Spike 分析 V3 · 规划中'
-        : App.workspaceMode === 'quick' ? '快速分析'
+        : App.workspaceMode === 'quick' ? '分析工作台'
         : '项目分析')
       : '工作台';
     capTag.textContent = capabilityText();
@@ -1007,7 +1008,7 @@ padding: 16px;
   }
 
   function boundaryNote() {
-    return '<div class="notice boundary">仅供科研参考，不用于临床诊断。' + (App.workspaceMode === 'quick' ? '工作区数据仅保存在本机。' : '') + '</div>';
+    return '<div class="notice boundary">仅供科研参考，不用于临床诊断。</div>';
   }
 
   function sleepReviewPage() {
@@ -2329,8 +2330,8 @@ function skeletonPage() {
     return `
       <div class="page-head">
         <div>
-          <h2>快速分析 · 导入文件</h2>
-          <p class="desc">打开数据文件即可开始，无需建项目/受试者档案；数据仅保存在本机。</p>
+          <h2>导入文件</h2>
+          <p class="desc">打开数据文件即可开始，无需建项目/受试者档案。</p>
         </div>
         <span class="cap-tag ${capTagClass()}">${capabilityText()}</span>
       </div>
@@ -4986,7 +4987,8 @@ ${qeegSubjectCard}
     toast('重置链接已发送至 ' + acct + '（原型演示）');
     showAuth('login');
   });
-  $('btnReset').addEventListener('click', resetDemo);
+  const btnReset = $('btnReset');
+  if (btnReset) btnReset.addEventListener('click', resetDemo);
   $('btnExit').addEventListener('click', exitToLaunch);
   $('btnLoginToggle').addEventListener('click', () => {
     if (App.loggedIn) {
