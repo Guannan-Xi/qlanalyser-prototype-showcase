@@ -71,6 +71,7 @@
   .entry-chips { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; margin: 0 0 14px; min-height: 46px; }
   .entry-chips span { padding: 2px 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-size: 11px; }
   .entry-note { margin: 14px 0 0; padding-top: 12px; border-top: 1px dashed var(--border); font-size: 12px; color: var(--subtle); line-height: 1.6; min-height: calc(1.6em * 2); }
+  .entry-note-line { display: block; }
   .ob-spotlight { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(8,16,32,.68); z-index: 1200; pointer-events: none; transition: left .22s ease, top .22s ease, width .22s ease, height .22s ease; }
 .ob-tip { position: fixed; z-index: 1201; width: min(420px, 92vw); background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 18px 50px rgba(8,20,40,.35); padding: 16px 18px; }
   .ob-tip h3 { margin: 0 0 6px; font-size: 16px; color: var(--ink); }
@@ -488,7 +489,10 @@ padding: 16px;
           <button class="btn" id="btnFullStart" type="button">项目管理</button>
         </div>
         <button class="entry-link" id="btnQuickDemo" type="button">演示模式</button>
-        <p class="entry-note" id="fullDesc">快速：本地单文件即时分析 · 项目：研究项目数据批量管理与分析</p>
+        <p class="entry-note" id="fullDesc">
+          <span class="entry-note-line" id="fullDescQuick">快速：本地单文件即时分析</span>
+          <span class="entry-note-line" id="fullDescProject">项目：研究项目数据批量管理与分析</span>
+        </p>
       </div>
       <div class="entry-card" id="entrySim">
         <span class="tag amber">待开放</span>
@@ -502,7 +506,10 @@ padding: 16px;
           <button class="btn" id="btnSimProj" type="button">项目管理</button>
         </div>
         <button class="entry-link" type="button" tabindex="-1" aria-hidden="true" style="visibility:hidden">演示模式</button>
-        <p class="entry-note">快速：临时试算 · 项目：仿真方案批量管理与分析</p>
+        <p class="entry-note">
+          <span class="entry-note-line">快速：临时试算</span>
+          <span class="entry-note-line">项目：仿真方案批量管理与分析</span>
+        </p>
       </div>
       <div class="entry-card" id="entrySpike">
         <span class="tag amber">待开放</span>
@@ -516,7 +523,10 @@ padding: 16px;
           <button class="btn" id="btnSpikeProj" type="button">项目管理</button>
         </div>
         <button class="entry-link" type="button" tabindex="-1" aria-hidden="true" style="visibility:hidden">演示模式</button>
-        <p class="entry-note">快速：单文件即时分析 · 项目：受试者/会话批量管理与分析</p>
+        <p class="entry-note">
+          <span class="entry-note-line">快速：单文件即时分析</span>
+          <span class="entry-note-line">项目：受试者/会话批量管理与分析</span>
+        </p>
       </div>
     </div>
   </div>
@@ -894,8 +904,9 @@ padding: 16px;
 
   function renderLaunch() {
     $('quickTag').textContent = '可用';
-    const fullDesc = $('fullDesc');
-    if (fullDesc) fullDesc.textContent = App.loggedIn ? '快速：本地单文件即时分析 · 项目：研究项目数据批量管理与分析' : '快速：本地单文件即时分析 · 项目：研究项目数据批量管理与分析';
+    const fullDescQuick = $('fullDescQuick'), fullDescProject = $('fullDescProject');
+    if (fullDescQuick) fullDescQuick.textContent = '快速：本地单文件即时分析';
+    if (fullDescProject) fullDescProject.textContent = '项目：研究项目数据批量管理与分析';
     const demoBtn = $('btnQuickDemo');
     if (demoBtn) { demoBtn.disabled = false; demoBtn.style.visibility = App.teaching ? 'visible' : 'hidden'; }
     const cover = $('coverAccount');
