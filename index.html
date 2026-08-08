@@ -59,7 +59,7 @@
 
 
 
-  .entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; width: min(920px, 100%); }
+  .entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; width: min(920px, 100%); align-items: stretch; }
   .entry-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(1180px, 100%); }
   .entry-card { position: relative; display: flex; flex-direction: column; background: #fff; color: var(--ink); border: 1px solid var(--border); border-radius: 14px; padding: 24px; cursor: pointer; box-shadow: 0 12px 32px rgba(8,20,40,.22); transition: transform .15s, box-shadow .15s, border-color .15s, opacity .15s; }
   .entry-card { height: 100%; }
@@ -68,10 +68,9 @@
   .entry-card .tag { position: absolute; top: 12px; right: 12px; padding: 3px 8px; border-radius: 999px; font-size: 11px; background: var(--primary-soft); color: var(--primary); }
   .entry-card .tag.amber { background: var(--amber-soft); color: var(--amber); }
   .entry-card .tag.ok { background: #e8f7ef; color: #0f9d76; }
-  .entry-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+  .entry-chips { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; margin: 0 0 14px; min-height: 46px; }
   .entry-chips span { padding: 2px 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-size: 11px; }
-  .entry-note { margin: 10px 0 0; font-size: 12px; color: var(--subtle); line-height: 1.6; }
-  .entry-note { margin-top: auto; padding-top: 12px; }
+  .entry-note { margin: auto 0 0; padding-top: 12px; font-size: 12px; color: var(--subtle); line-height: 1.6; }
   .ob-spotlight { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(8,16,32,.68); z-index: 1200; pointer-events: none; transition: left .22s ease, top .22s ease, width .22s ease, height .22s ease; }
 .ob-tip { position: fixed; z-index: 1201; width: min(420px, 92vw); background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 18px 50px rgba(8,20,40,.35); padding: 16px 18px; }
   .ob-tip h3 { margin: 0 0 6px; font-size: 16px; color: var(--ink); }
@@ -79,8 +78,8 @@
   .ob-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .ob-count { font-size: 12px; color: var(--muted); font-weight: 600; }
   .entry-icon { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg, #80acd8, #284880); color: #fff; margin-bottom: 14px; box-shadow: 0 3px 8px rgba(40,72,128,.22); }
-  .entry-card h3 { margin: 0 0 8px; font-size: 18px; }
-  .entry-card p { margin: 0 0 18px; color: var(--subtle); font-size: 13px; line-height: 1.7; flex: 1; }
+  .entry-card h3 { margin: 0 0 10px; font-size: 17px; line-height: 1.4; min-height: calc(1.4em * 2); }
+  .entry-card p { margin: 0 0 18px; color: var(--subtle); font-size: 13px; line-height: 1.7; min-height: calc(1.7em * 2); }
   .entry-actions { display: flex; flex-direction: column; gap: 6px; }
   .entry-actions .btn { width: 100%; }
   .entry-link { border: 0; background: none; color: var(--primary); font-size: 13px; cursor: pointer; padding: 6px 0 0; align-self: center; }
@@ -488,9 +487,8 @@ padding: 16px;
         <div class="entry-actions">
           <button class="btn primary" id="btnQuickStart" type="button">快速分析</button>
           <button class="btn" id="btnFullStart" type="button">项目管理</button>
-          <button class="entry-link" id="btnQuickDemo" type="button">演示模式：自动走完流程</button>
         </div>
-        <p class="entry-note" id="fullDesc">快速：本地单文件 · 项目：登录后按项目归档</p>
+        <p class="entry-note" id="fullDesc">快速：本地单文件 · 项目：登录后按项目归档 <button class="entry-link" id="btnQuickDemo" type="button">演示模式</button></p>
       </div>
       <div class="entry-card" id="entrySim">
         <span class="tag amber">V2 · 规划中</span>
