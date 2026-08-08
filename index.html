@@ -97,7 +97,99 @@
   .drawer-backdrop { position: fixed; inset: 0; background: rgba(15,25,35,.35); z-index: 70; }
   .drawer-right { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 94vw); background: #fff; z-index: 71; box-shadow: -12px 0 36px rgba(8,20,40,.22); overflow-y: auto; padding: 20px 22px; border-left: 1px solid var(--border); }
   .drawer-right h3 { margin: 0 0 10px; }
-  .viewer-toolbar .btn { padding: 5px 10px; min-height: 30px; font-size: 12px; }
+  /* 数据预览与预处理：波形同层级底部折叠工作区（2026-08-08） */
+  .preview-workbench { display: flex; flex-direction: column; align-items: stretch; gap: 0; flex: 1; min-height: 0; }
+  .canvas-col { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+  .preview-canvas { flex: 1; min-height: 280px; overflow: auto; margin-top: 10px; position: relative; }
+  .param-dock { flex: 0 0 auto; border-top: 1px solid var(--border); background: #fff; display: flex; flex-direction: column; order: 1; }
+  .param-dock .dock-panel { display: none; flex-direction: column; width: 100%; }
+  .param-dock.open .dock-panel { display: flex; }
+  .param-dock:not(.open) .dock-rail { display: flex; flex-direction: row; align-items: center; gap: 10px; flex-wrap: nowrap; white-space: nowrap; width: 100%; padding: 8px 12px; cursor: pointer; border-top: 1px solid var(--border); background: #f6f8fb; }
+  .param-dock.open .dock-rail { display: none; }
+  .dock-rail .rail-icon { font-size: 14px; color: #284880; }
+  .dock-rail .rail-label { font-size: 12px; font-weight: 600; color: #284880; }
+  .dock-rail .rail-dot { width: 8px; height: 8px; border-radius: 50%; background: #e46a50; }
+  .dock-rail .rail-summary { overflow: hidden; text-overflow: ellipsis; }
+  .pd-group { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .pd-summary { flex: 1; overflow: hidden; }
+  .chip { flex: none; padding: 2px 8px; border-radius: 10px; background: #eef3f9; border: 1px solid #dbe6f0; color: #284880; font-size: 12px; white-space: nowrap; }
+  .chip.on { background: #dcebfa; border-color: #9cc3ea; color: #2a5fae; font-weight: 600; }
+  .chip-range { background: #e8f1fb; border-color: #bcd7f2; color: #2a5fae; }
+  .dock-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+  .dock-body { flex: 1; padding: 12px 14px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px 16px; align-items: start; }
+  .dock-group { min-width: 0; background: #fbfcfe; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px 12px; }
+  .dock-group.t3 { grid-column: span 3; }
+  .dock-group.t4 { grid-column: span 4; }
+  .dock-group.t6 { grid-column: span 6; }
+  .dock-group.t8 { grid-column: span 8; }
+  .dock-group.t12 { grid-column: 1 / -1; }
+  .dock-group .pre-group { margin: 8px 0 6px; padding-top: 0; border-top: 0; font-size: 12px; }
+  .dock-group .field-note { font-size: 11px; color: #66798c; margin: 6px 0 0; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .dock-group .field-note.note-warn { color: #a4741d; }
+  .info-tip { color: #7c8fa4; cursor: help; font-size: 12px; }
+  .reref-modes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .reref-mode { flex: 1; min-width: 0; padding: 5px 8px; border: 1px solid var(--border-strong); border-radius: 6px; background: #fff; color: #556b80; font-size: 12px; cursor: pointer; white-space: nowrap; }
+  .reref-mode.on { border-color: var(--primary); background: #e8f1fb; color: var(--primary); font-weight: 600; box-shadow: inset 0 0 0 1px var(--primary); }
+  .reref-mode:disabled { opacity: .45; cursor: not-allowed; }
+  .quick-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .bad-tags { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+  .bad-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 10px; font-size: 11px; background: #fdece8; border: 1px solid #f4c7bc; color: #b3483a; }
+  .bad-tag.manual { background: #fdf3e3; border-color: #ecd3a6; color: #a4741d; }
+  .bad-tag .bad-rm { border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 12px; line-height: 1; padding: 0 2px; }
+  .pick-bar { margin-bottom: 8px; padding: 7px 12px; background: #e8f1fb; border: 1px solid #bcd7f2; border-radius: 8px; color: #2a5fae; font-size: 12px; display: flex; align-items: center; }
+  .tool-overlay { position: absolute; inset: 0; z-index: 15; cursor: crosshair; }
+  .input-addon { display: flex; align-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: #fff; overflow: hidden; }
+  .input-addon .input { border: 0; box-shadow: none; padding: 8px 10px; }
+  .input-addon .addon { padding: 0 9px; color: #8aa0b5; font-size: 12px; background: #f6f8fb; align-self: stretch; display: flex; align-items: center; border-left: 1px solid var(--border-strong); }
+  .param-tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+  .param-tags .chip { background: #eef3f9; border-color: #dbe6f0; color: #284880; }
+  .card-flash { animation: cardFlash 1.2s ease; }
+  @keyframes cardFlash { 0% { box-shadow: 0 0 0 2px #3f7fd6; } 100% { box-shadow: 0 0 0 0 rgba(63,127,214,0); } }
+  .dock-params .dock-group .grid-2 { gap: 8px 12px; }
+  .trail-list { display: flex; flex-direction: column; gap: 8px; max-height: 230px; overflow-y: auto; }
+  .trail-card { padding: 8px 10px; border-left: 3px solid #3f7fd6; background: #f2f6fb; border-radius: 0 6px 6px 0; font-size: 12px; }
+  .trail-card .trail-time { color: #7c8fa4; font-size: 11px; }
+  .trail-card .trail-action { font-weight: 600; color: #284880; margin: 2px 0; }
+  .trail-card .trail-meta { color: #556b80; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .dock-foot { border-top: 1px solid var(--border); padding: 10px 14px; background: #fbfcfe; display: flex; align-items: center; gap: 14px; }
+  .dock-foot #preApplyNote { flex: 1; min-width: 0; margin: 0 !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dock-foot .btn-row { margin: 0; flex: 0 0 auto; }
+  .dock-collapse-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding: 8px 12px; background: #f6f8fb; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 12px; color: #284880; }
+  .dock-collapse-bar .mini-timeline { position: relative; height: 8px; flex: 1; min-width: 120px; background: #e3ebf3; border-radius: 4px; }
+  .dock-collapse-bar .mini-timeline i { position: absolute; top: 0; bottom: 0; background: #3f7fd6; border-radius: 4px; }
+  .dock-rail .mini-timeline { position: relative; height: 8px; flex: 1; min-width: 120px; background: #e3ebf3; border-radius: 4px; }
+  .dock-rail .mini-timeline i { position: absolute; top: 0; bottom: 0; background: #3f7fd6; border-radius: 4px; }
+  .dock-backdrop { display: none; }
+  .seg-popover { position: absolute; z-index: 20; width: 270px; padding: 10px 12px; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 18px rgba(8,20,40,.18); font-size: 12px; }
+  .seg-popover .btn { padding: 3px 10px; font-size: 12px; }
+  .tb-overflow { position: relative; display: block; }
+  .tb-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: 230px; padding: 10px 12px; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(8,20,40,.18); display: flex; flex-direction: column; gap: 8px; }
+  .viewer-toolbar .sep { width: 1px; height: 22px; background: #dbe6f0; margin: 0 6px; flex: 0 0 auto; }
+  .btn-sub { padding: 4px 9px; font-size: 12px; min-height: 32px; color: #556b80; background: #fff; border: 1px solid #dbe6f0; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(15,25,35,.42); z-index: 80; }
+  .modal-card { position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); width: min(520px, 92vw); max-height: 82vh; overflow-y: auto; background: #fff; border-radius: 12px; box-shadow: 0 18px 50px rgba(8,20,40,.30); z-index: 81; padding: 16px 20px; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .dock-rail { font-size: 12px; }
+  .dock-rail .rail-label { font-size: 13px; }
+  .dock-rail .chip { font-size: 11px; }
+  .pd-summary { justify-content: flex-end; }
+  .dock-params .field span, .dock-params .select, .dock-params .input { font-size: 12px; }
+  .dock-params .pre-group { font-size: 12px; }
+  .dock-foot .btn { font-size: 12px; }
+  .dock-head h3 { font-size: 13px; }
+  @media (max-width: 1279px) {
+    .preview-workbench { display: flex; flex-direction: column; }
+    .param-dock.open { position: fixed; left: 0; right: 0; top: auto; bottom: 0; max-height: 72vh; z-index: 71; box-shadow: 0 -12px 36px rgba(8,20,40,.22); }
+    .param-dock.open .dock-panel { max-height: 56vh; }
+    .param-dock.open ~ .dock-backdrop { display: block; position: fixed; inset: 0; background: rgba(15,25,35,.35); z-index: 70; }
+    .param-dock:not(.open) .dock-rail { position: static; box-shadow: none; }
+    .dock-body { overflow-y: auto; }
+    .dock-group.t3, .dock-group.t4, .dock-group.t6, .dock-group.t8 { grid-column: span 12; }
+    .pd-summary .chip:nth-child(n+3) { display: none; }
+    .tb-secondary { display: none !important; }
+  }
+  .tb-secondary { display: none !important; }
+  .viewer-toolbar .btn { padding: 5px 10px; min-height: 32px; font-size: 12px; }
   .entry-link:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
 
   .launch-top { position: absolute; top: 24px; right: 32px; display: flex; gap: 10px; align-items: center; }
@@ -239,8 +331,10 @@
   .placeholder-box { border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); padding: 10px 14px; text-align: center; color: var(--subtle); font-size: 13px; background: repeating-linear-gradient(45deg, #f4f7fa, #f4f7fa 10px, #eef2f6 10px, #eef2f6 20px); }
   .steps { display: flex; flex-wrap: wrap; gap: 8px; }
   .step { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: #fff; font-size: 12px; color: var(--subtle); }
-  .step.done { border-color: var(--accent); color: var(--teal-dark); background: var(--accent-soft); }
-  .step.now { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+  .step.done { border-color: #dbe6f0; color: #8aa0b5; background: #f6f8fb; }
+  .step.done .n { background: #c7d6e5; }
+  .step.now { border-color: var(--primary); color: #fff; background: var(--primary); font-weight: 600; }
+  .step.now .n { background: #fff; color: var(--primary); }
   .step .n { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; background: var(--primary); color: #fff; font-size: 10px; font-weight: 600; }
   .scheme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .scheme-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: #fff; cursor: pointer; box-shadow: var(--shadow); transition: border-color .15s, box-shadow .15s; }
@@ -776,6 +870,27 @@ padding: 16px;
     preRedo: [],               // 坏段操作重做栈
     preLog: [],                // 处理记录（批次①）
     preDirty: false,           // 是否有未应用更改
+    dockOpen: true,            // 预处理 dock 默认全展开；可收起为底部折叠条
+    viewMode: 'raw',           // 波形显示模式：raw | preview | processed
+    analysisRange: { start: 0, end: 10 },  // 分析时间范围选择（秒，波形可视化）
+    tmpRange: null,            // 拖拽中的临时区间 {start,end}
+    previewFilter: false,      // 滤波预览（仅渲染，不改数据）
+    artifactSegs: [{ start: 3.52, end: 3.72 }],  // 伪迹示意标记（黄）
+    interpSegs: [{ start: 5.2, end: 5.55 }],     // 插值修复段示意标记（蓝）
+    rerefPickMode: false,      // 波形点选参考通道模式
+    zoomRectMode: false,       // 框选放大模式
+    measureMode: false,        // 测量十字线模式
+    measurePts: [],            // 测量固定点 [{t,uV}]
+    eventFilter: [],           // 事件类型筛选（空=全部）
+    prevView: null,            // 框选放大前视图（Esc 还原）
+    segFilter: [],             // 色带筛选（art/bad/interp，空=全部）
+    annotateMode: false,       // 注释打标模式
+    annotations: [],           // 注释 [{t,label}]
+    badCandidates: [],         // 自动检测候选坏道 [{name,reason}]
+    channelOrder: null,        // 通道顺序（null=默认）
+    channelHidden: [],         // 隐藏通道
+    chanGain: {},              // 单通道增益覆盖 {chName: gain}
+    preParams: { hp: '0.5 Hz', lp: '70 Hz', notch: '50 Hz', art: '200', badArt: '200', policy: '完全删除', ica: '自动', rerefMode: 'avg', rerefChannel: 'Cz', badChan: '启用（球形插值）', badList: [{ name: 'Cz', source: 'auto', reason: '方差过高' }] },
     emg: {                    // EMG 模块（批次②）
       range: { start: '00:00:00', end: '06:12:00' },
       channels: [],
@@ -872,7 +987,7 @@ if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模�
   /* ============ 唯一 routeId 注册表 ============ */
   const ROUTES = {
     'q-home':     { label: '导入与检查',           role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickHome' },
-    'q-overview': { label: '数据概览与预处理',   role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickOverview' },
+    'q-overview': { label: '数据预览与预处理',   role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickOverview' },
     'q-choose':   { label: '配置分析方案',       role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickChoose' },
     'q-custom':   { label: '自定义分析',         role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickCustom' },
     'q-guide':    { label: '帮我选分析',         role: 'customer', workspaceMode: 'quick', featureFlag: 'quick', kind: 'quickGuide' },
@@ -902,7 +1017,7 @@ if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模�
     quick:    {
       group: '快速分析',
       items: ['q-home', 'q-overview', {
-        label: '配置分析方案',
+        label: '分析方案',
         route: 'q-choose',
         children: [
           { route: 'q-choose', label: '预置分析方案', focus: 'preset' },
@@ -924,7 +1039,7 @@ if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模�
       workspace: 'QW-20260803-A',
       dataset: 'DS-20260803-0041',
       file: 'sub-01_night1.edf',
-      size: '486 MB', ch: '22（EEG 18 / EOG 2 / EMG 1 / ECG 1）', rate: '512 Hz', dur: '7 小时 52 分 40 秒'
+      size: '486 MB', ch: '64（EEG 60 / EOG 2 / EMG 1 / ECG 1）', rate: '512 Hz', dur: '7 小时 52 分 40 秒'
     },
     project: { id: 'PJ-EPI-2026-014', name: '癫痫术前筛查', subjects: 48, datasets: 156, updated: '2026-08-03' },
     dataset: { id: 'DS-20260803-0041', file: 'sub-01_night1.edf', ch: 22, rate: 512, qc: '通过（1 条警告）' },
@@ -1082,7 +1197,7 @@ if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模�
   }
 
   function boundaryNote() {
-    return '<div class="notice boundary">仅供科研参考，不用于临床诊断。</div>';
+    return '';
   }
 
   function sleepReviewPage() {
@@ -1270,7 +1385,7 @@ if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模�
 
   function quickSteps(cur) {
     const names = ['导入与检查', '数据概览', '配置分析方案', '结果复核与导出'];
-    return '<div class="steps" style="margin-bottom:12px">' + names.map((s, i) => '<span class="step ' + (i + 1 === cur ? 'now' : i + 1 < cur ? 'done' : '') + '"><span class="n">' + (i + 1) + '</span>' + s + '</span>').join('') + '</div>';
+    return '<div class="steps" style="margin-bottom:8px">' + names.map((s, i) => '<span class="step ' + (i + 1 === cur ? 'now' : i + 1 < cur ? 'done' : '') + '"><span class="n">' + (i + 1 < cur ? '✓' : (i + 1)) + '</span>' + s + '</span>').join('') + '</div>';
   }
 
   function profilePage() {
@@ -1328,19 +1443,40 @@ function skeletonPage() {
 
   /* ==== V1 批次①（2026-08-06）：确定性示例波形与坏段工具 ==== */
   function v1DemoChannels() {
-    return [
+    const base = [
       { name: 'Fz', role: 'EEG', amp: 100 }, { name: 'Cz', role: 'EEG', amp: 100 },
       { name: 'Pz', role: 'EEG', amp: 100 }, { name: 'O1', role: 'EEG', amp: 100 },
       { name: 'O2', role: 'EEG', amp: 100 }, { name: 'C3', role: 'EEG', amp: 100 },
       { name: 'C4', role: 'EEG', amp: 100 }, { name: 'EOG-L', role: 'EOG', amp: 100 },
       { name: 'EOG-R', role: 'EOG', amp: 100 }, { name: 'EMG', role: 'EMG', amp: 200 }, { name: 'ECG', role: 'ECG', amp: 1000 }
     ];
+    const ext = ['F7','F8','F3','F4','T7','T8','P7','P8','Oz','AF7','AF8','AF3','AF4','F1','F2','FC1','FC2','FC5','FC6','C1','C2','CP1','CP2','CP5','CP6','P1','P2','PO3','PO4','PO7','PO8','PO9','PO10','FT7','FT8','TP7','TP8','FCz','CPz','Fpz','AFz','FC3','FC4','C5','C6','CP3','CP4','P3','P4','P5','P6','POz','O9'];
+    return base.concat(ext.map(function (n) { return { name: n, role: 'EEG', amp: 100 }; }));
   }
   function v1DemoEvents() {
     return [
       { t: 1.8, label: 'N1', kind: 'sleep' }, { t: 4.2, label: 'N2', kind: 'sleep' },
       { t: 6.5, label: 'REM', kind: 'sleep' }, { t: 8.1, label: 'Spike', kind: 'spike' }
     ];
+  }
+  function v1BadNames() {
+    return ((App.preParams && App.preParams.badList) || []).map(function (b) { return b.name; });
+  }
+  function orderedChannels() {
+    let chs = v1DemoChannels().slice();
+    if (App.channelHidden && App.channelHidden.length) chs = chs.filter((c) => App.channelHidden.indexOf(c.name) < 0);
+    if (App.channelOrder && App.channelOrder.length) {
+      const map = {};
+      chs.forEach((c) => { map[c.name] = c; });
+      chs = App.channelOrder.map((n) => map[n]).filter(Boolean);
+    }
+    return chs;
+  }
+  function v1RerefLabel(mode, ch) {
+    if (mode === 'none') return '保留原始参考';
+    if (mode === 'chan') return '参考 ' + (ch || '—');
+    if (mode === 'bip') return '相邻通道差分（双极）';
+    return '平均参考';
   }
   function v1Rnd(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
   function v1WaveY(t, chIdx, amp) {
@@ -1354,50 +1490,140 @@ function skeletonPage() {
     const channels = opts.channels || v1DemoChannels();
     const events = opts.events || [];
     const badSegs = opts.badSegs || [];
+    const artifactSegs = opts.artifactSegs || [];
+    const interpSegs = opts.interpSegs || [];
+    const badChans = opts.badChans || [];
+    const rerefMode = (App.preParams && App.preParams.rerefMode) || 'avg';
+    const rerefChannel = (App.preParams && App.preParams.rerefChannel) || '';
+    const analysisRange = opts.analysisRange || null;
+    const tmpRange = opts.tmpRange || null;
+    const previewFilter = !!opts.previewFilter;
     const secs = opts.seconds || 10;
     const start = opts.start || 0;
     const gain = opts.gain || 100;
     const processed = !!opts.processed;
-    const rowH = 36, labelW = 66, pad = 8, topH = 26;
-    const W = 980, H = topH + channels.length * rowH + 34;
+    const rowH = 42, labelW = 66, pad = 8, topH = 58;
+    const W = 980, H = topH + channels.length * rowH + 46;
     const x0 = labelW + pad, x1 = W - pad, plotW = x1 - x0;
     const px = (t) => x0 + ((t - start) / secs) * plotW;
     const ampScale = (gain / 100) * (rowH / 2 - 8) * 0.9;
+    const filterVal = (t, i) => v1WaveY(t, i, 1) * 0.55 - Math.sin(2 * Math.PI * 0.7 * t) * 0.12;
+    const fmtTime = (s) => '00:' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
     let out = '';
-    out += '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;background:#fbfcfe;border:1px solid var(--border);border-radius:8px" role="img" aria-label="原始波形预览">';
-    out += '<text x="' + pad + '" y="' + (topH - 8) + '" font-size="12" fill="#556b80">' + (App.teaching ? '示例波形（确定性数据，非真实记录）' : '原始波形') + (processed ? ' · 处理版本（已清洗）' : ' · 原始') + ' · 时窗 ' + start.toFixed(1) + '–' + (start + secs).toFixed(1) + ' s · ±' + gain + ' µV/格</text>';
-    for (const e of events) {
-      const ex = px(e.t);
-      if (ex < x0 || ex > x1) continue;
-      out += '<line x1="' + ex.toFixed(1) + '" y1="' + topH + '" x2="' + ex.toFixed(1) + '" y2="' + (H - 22) + '" stroke="' + (e.kind === 'spike' ? '#e46a50' : '#3f7fd6') + '" stroke-width="1" stroke-dasharray="4 3" opacity="0.55"/>';
-      out += '<text x="' + (ex + 3).toFixed(1) + '" y="' + (topH - 3) + '" font-size="11" fill="' + (e.kind === 'spike' ? '#e46a50' : '#3f7fd6') + '">' + e.label + '</text>';
+    out += '<svg id="previewWaveSvg" viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;background:#fbfcfe;border:1px solid var(--border);border-radius:8px;user-select:none" role="img" aria-label="原始波形预览">';
+    out += '<text x="' + pad + '" y="16" font-size="12" fill="#556b80">' + (App.teaching ? '示例波形 · ' : '') + (processed ? '已应用（' + (App.preVersions && App.preVersions.length ? App.preVersions[App.preVersions.length - 1].id : 'v1') + '）' : previewFilter ? '滤波预览（未应用）' : '原始') + ' · 时窗 ' + start.toFixed(1) + '–' + (start + secs).toFixed(1) + ' s' + (badChans.length ? ' · ● 坏道 ' + badChans.join('/') : '') + '</text>';
+    const evLegend = [['N1', '#3f7fd6'], ['N2', '#3f7fd6'], ['REM', '#3f7fd6'], ['Spike', '#e46a50']];
+    let legendX = x0 + 4;
+    evLegend.forEach(function (lg) {
+      const on = !(App.eventFilter && App.eventFilter.length) || App.eventFilter.indexOf(lg[0]) >= 0;
+      out += '<text x="' + legendX.toFixed(1) + '" y="34" font-size="11" fill="' + lg[1] + '" opacity="' + (on ? '1' : '0.35') + '" font-weight="' + (on ? '700' : '400') + '" data-ev-legend="' + lg[0] + '" style="cursor:pointer">' + lg[0] + '</text>';
+      legendX += lg[0].length * 8 + 16;
+    });
+    if (analysisRange) {
+      const as2 = Math.max(0, analysisRange.start), ae2 = Math.min(10, analysisRange.end);
+      out += '<text id="svgRangeStatus" x="' + (x1 - 2) + '" y="16" font-size="11" fill="#3f7fd6" text-anchor="end" style="cursor:pointer" title="点击以当前视窗为分析区间">分析区间 ' + fmtTime(as2) + '–' + fmtTime(ae2) + '</text>';
     }
-    for (const b of badSegs) {
-      const bx0 = px(Math.max(start, b.start)), bx1 = px(Math.min(start + secs, b.end));
-      if (bx1 < x0 || bx0 > x1) continue;
-      out += '<rect x="' + bx0.toFixed(1) + '" y="' + topH + '" width="' + Math.max(2, bx1 - bx0).toFixed(1) + '" height="' + (H - 22 - topH) + '" fill="#e46a50" opacity="0.16"/>';
+    // 图层 0：分析区间阴影（最底层，可拖整体移动；不拦截色带点击）
+    if (analysisRange) {
+      const as = Math.max(start, analysisRange.start), ae = Math.min(start + secs, analysisRange.end);
+      const ax0 = px(as), ax1 = px(ae);
+      if (ax1 > x0 && ax0 < x1) {
+        out += '<rect id="svgRangeBody" x="' + Math.max(x0, ax0).toFixed(1) + '" y="' + topH + '" width="' + Math.max(2, Math.min(x1, ax1) - Math.max(x0, ax0)).toFixed(1) + '" height="' + (H - 22 - topH) + '" fill="#3f7fd6" opacity="0.10" style="cursor:ew-resize"/>';
+      }
     }
+    // 图层 1：三类色带（坏段红 / 伪迹黄 / 插值蓝），带点击热区
+    const segBand = (seg, fill, key, i) => {
+      const bx0 = px(Math.max(start, seg.start)), bx1 = px(Math.min(start + secs, seg.end));
+      if (bx1 < x0 || bx0 > x1) return '';
+      return '<rect data-seg="' + key + ':' + i + '" x="' + bx0.toFixed(1) + '" y="' + topH + '" width="' + Math.max(2, bx1 - bx0).toFixed(1) + '" height="' + (H - 22 - topH) + '" fill="' + fill + '" opacity="0.18" style="cursor:pointer"/>';
+    };
+    const segVisible = (key) => !(App.segFilter && App.segFilter.length) || App.segFilter.indexOf(key) >= 0;
+    badSegs.forEach((b, i) => { if (segVisible('bad')) out += segBand(b, '#e46a50', 'bad', i); });
+    artifactSegs.forEach((b, i) => { if (segVisible('art')) out += segBand(b, '#d9a514', 'art', i); });
+    interpSegs.forEach((b, i) => { if (segVisible('interp')) out += segBand(b, '#3f7fd6', 'interp', i); });
+    // 图层 5：波形路径（原始实线；滤波预览叠加虚线；已应用为处理版本）
     channels.forEach((ch, i) => {
       const yTop = topH + i * rowH, yMid = yTop + rowH / 2;
-      out += '<text x="' + pad + '" y="' + (yMid + 4) + '" font-size="12" fill="#284880">' + ch.name + '</text>';
-      out += '<text x="' + (labelW - 4) + '" y="' + (yMid + 4) + '" font-size="10" fill="#8aa0b5" text-anchor="end">' + ch.role + '</text>';
+      const g = (App.chanGain && App.chanGain[ch.name]) || gain;
+      const ampScale = (g / 100) * (rowH / 2 - 8) * 0.9;
+      const isBad = badChans.indexOf(ch.name) >= 0;
+      const isRef = rerefMode === 'chan' && ch.name === rerefChannel;
+      if (isRef) out += '<rect x="' + x0 + '" y="' + yTop + '" width="' + (x1 - x0) + '" height="' + rowH + '" fill="#3f7fd6" opacity="0.08"/>';
+      if (isBad) out += '<rect x="' + x0 + '" y="' + yTop + '" width="' + (x1 - x0) + '" height="' + rowH + '" fill="#e46a50" opacity="0.07"/>';
+      out += '<text x="' + pad + '" y="' + (yMid + 4) + '" font-size="12" fill="' + (isRef ? '#2a5fae' : isBad ? '#d33' : '#284880') + '" font-weight="' + (isRef ? '700' : '400') + '">' + ch.name + (isBad ? ' ●' : '') + (isRef ? ' ◀ 参考' : '') + '</text>';
+      if (ch.role !== 'EEG') out += '<text x="' + (labelW - 4) + '" y="' + (yMid + 4) + '" font-size="10" fill="#8aa0b5" text-anchor="end">' + ch.role + '</text>';
       out += '<line x1="' + x0 + '" y1="' + yMid + '" x2="' + x1 + '" y2="' + yMid + '" stroke="#e3ebf3" stroke-width="1"/>';
       let d = '';
       for (let xi = 0; xi <= plotW; xi += 3) {
         const t = start + (xi / plotW) * secs;
         let v = v1WaveY(t, i, 1);
+        if (rerefMode === 'chan' && rerefChannel) {
+          const refIdx = channels.findIndex((c) => c.name === rerefChannel);
+          if (refIdx >= 0 && refIdx !== i) v = v - v1WaveY(t, refIdx, 1) * 0.4;
+        } else if (rerefMode === 'avg') {
+          v = v - v1WaveY(t, 0, 1) * 0.12;
+        }
         if (processed) v = v * 0.55 - Math.sin(2 * Math.PI * 0.7 * t) * 0.12;
         const y = yMid - v * ampScale;
         d += (xi === 0 ? 'M' : 'L') + (x0 + xi).toFixed(1) + ' ' + y.toFixed(1);
       }
       out += '<path d="' + d + '" fill="none" stroke="' + (ch.role === 'EMG' ? '#8b5cf6' : '#2856a0') + '" stroke-width="1.2"/>';
+      if (previewFilter && !processed) {
+        let dp = '';
+        for (let xi = 0; xi <= plotW; xi += 3) {
+          const t = start + (xi / plotW) * secs;
+          const v = filterVal(t, i);
+          const y = yMid - v * ampScale;
+          dp += (xi === 0 ? 'M' : 'L') + (x0 + xi).toFixed(1) + ' ' + y.toFixed(1);
+        }
+        out += '<path d="' + dp + '" fill="none" stroke="' + (ch.role === 'EMG' ? '#8b5cf6' : '#0f8a5f') + '" stroke-width="1.1" stroke-dasharray="5 4" opacity="0.75"/>';
+      }
+      if (isBad) {
+        out += '<circle cx="' + (x1 - 8) + '" cy="' + yMid + '" r="3.2" fill="#d33" opacity="0.85"><title>坏道：' + ch.name + '（插值修复）</title></circle>';
+      }
+      out += '<rect data-chan="' + ch.name + '" x="' + x0 + '" y="' + yTop + '" width="' + (x1 - x0) + '" height="' + rowH + '" fill="transparent" style="cursor:' + (App.rerefPickMode ? 'crosshair' : 'default') + ';pointer-events:' + (App.rerefPickMode ? 'all' : 'none') + '"/>';
     });
-    out += '<line x1="' + x0 + '" y1="' + (H - 20) + '" x2="' + x1 + '" y2="' + (H - 20) + '" stroke="#b9c7d6" stroke-width="1"/>';
+    // 图层 4：viewport 临时选框（虚线，松手消失，不拦截点击）
+    if (tmpRange && tmpRange.end > tmpRange.start) {
+      const tx0 = px(Math.max(start, tmpRange.start)), tx1 = px(Math.min(start + secs, tmpRange.end));
+      if (tx1 > x0 && tx0 < x1) {
+        out += '<rect x="' + Math.max(x0, tx0).toFixed(1) + '" y="' + topH + '" width="' + Math.max(2, Math.min(x1, tx1) - Math.max(x0, tx0)).toFixed(1) + '" height="' + (H - 22 - topH) + '" fill="none" stroke="#2a5fae" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9" pointer-events="none"/>';
+      }
+    }
+    // 图层 5：区间左右手柄（最上层，可拖）
+    if (analysisRange) {
+      const as = Math.max(start, analysisRange.start), ae = Math.min(start + secs, analysisRange.end);
+      const ax0 = px(as), ax1 = px(ae);
+      if (ax1 > x0 && ax0 < x1) {
+        out += '<rect id="svgRangeL" x="' + Math.max(x0, ax0).toFixed(1) + '" y="' + topH + '" width="6" height="' + (H - 22 - topH) + '" fill="#3f7fd6" opacity="0.55" style="cursor:ew-resize"/>';
+        out += '<rect id="svgRangeR" x="' + Math.min(x1, ax1).toFixed(1) + '" y="' + topH + '" width="6" height="' + (H - 22 - topH) + '" fill="#3f7fd6" opacity="0.55" style="cursor:ew-resize"/>';
+      }
+    }
+    // 事件线（保留在标记之上）
+    for (const e of events) {
+      if (App.eventFilter && App.eventFilter.length && App.eventFilter.indexOf(e.label) < 0) continue;
+      const ex = px(e.t);
+      if (ex < x0 || ex > x1) continue;
+      const eColor = e.kind === 'spike' ? '#e46a50' : '#3f7fd6';
+      out += '<line x1="' + ex.toFixed(1) + '" y1="' + (topH + 4) + '" x2="' + ex.toFixed(1) + '" y2="' + (H - 30) + '" stroke="' + (e.kind === 'spike' ? '#e46a50' : '#3f7fd6') + '" stroke-width="1" stroke-dasharray="4 3" opacity="0.55" pointer-events="none"/>';
+      const eLabelW = e.label.length * 6.5 + 12;
+      out += '<rect x="' + (ex + 2).toFixed(1) + '" y="24" width="' + eLabelW.toFixed(1) + '" height="16" rx="3" fill="' + eColor + '" opacity="0.12" pointer-events="none"/>';
+      out += '<text x="' + (ex + 8).toFixed(1) + '" y="35" font-size="11" fill="' + eColor + '">' + e.label + '</text>';
+    }
+    (App.annotations || []).forEach(function (a) {
+      const ax = px(a.t);
+      if (ax < x0 || ax > x1) return;
+      const aw = a.label.length * 6.5 + 12;
+      out += '<rect x="' + (ax + 2).toFixed(1) + '" y="42" width="' + aw.toFixed(1) + '" height="14" rx="3" fill="#1e7d46" opacity="0.14" pointer-events="none"/>';
+      out += '<text x="' + (ax + 8).toFixed(1) + '" y="53" font-size="11" fill="#1e7d46">' + a.label + '</text>';
+      out += '<text x="' + (ax + aw + 9).toFixed(1) + '" y="53" font-size="11" fill="#1e7d46" data-ann-rm="' + a.t + '" style="cursor:pointer">✕</text>';
+    });
+    out += '<line x1="' + x0 + '" y1="' + (H - 26) + '" x2="' + x1 + '" y2="' + (H - 26) + '" stroke="#b9c7d6" stroke-width="1"/>';
     for (let g = 0; g <= 5; g++) {
       const t = start + (g * secs) / 5, gx = px(t);
-      out += '<text x="' + gx.toFixed(1) + '" y="' + (H - 7) + '" font-size="11" fill="#66798c" text-anchor="middle">' + t.toFixed(0) + 's</text>';
+      const anchor = g === 5 ? 'end' : 'middle';
+      out += '<text x="' + gx.toFixed(1) + '" y="' + (H - 9) + '" font-size="11" fill="#66798c" text-anchor="' + anchor + '">' + t.toFixed(0) + 's</text>';
     }
-    out += '<text x="' + (x1 - 6) + '" y="' + (H - 7) + '" font-size="11" fill="#66798c" text-anchor="end">±' + gain + ' µV/格</text>';
     out += '</svg>';
     return out;
   }
@@ -2520,7 +2746,7 @@ function skeletonPage() {
         </table>
         <p class="small muted" style="margin:8px 0 0">受试者下拉自动联动组别；本地文件加入后受试者未分配。</p>
       </div>
-      <details><summary class="small muted" style="cursor:pointer">展开共享预处理（区间/滤波/坏段）</summary><div style="margin-top:8px">${prePanelHtml()}</div></details>
+  <details><summary class="small muted" style="cursor:pointer">展开共享预处理（区间/滤波/坏段）</summary><div style="margin-top:8px">${preDockHtml(true)}</div></details>
       <div class="card">
         <h3>批量质控（质量门控）</h3>
         <button class="btn primary" id="btnQcRun" type="button" ${App.qcDone ? 'disabled' : ''}>开始批量质控</button>
@@ -2540,7 +2766,7 @@ function skeletonPage() {
       ${boundaryNote()}`;
   }
 
-  function prePanelHtml() {
+  function preDockHtml(forceInline) {
     const pre = App.preVersions || [];
     const preRows = pre.map((v) => `<tr><td>${v.id}</td><td>${v.tpl}</td><td>${v.summary}</td><td>${v.appliedAt}</td></tr>`).join('');
     const logs = App.preLog || [];
@@ -2551,77 +2777,147 @@ function skeletonPage() {
       : '无版本' + (lastLog ? ' · 最近 ' + lastLog.time + ' ' + lastLog.action : ' · 暂无操作');
     const chCount = v1DemoChannels().length;
     const icaDefault = chCount >= 32 ? '使用' : '不使用';
-    const cleanMode = App.cleanMode || 'auto';
+    const icaDisabled = chCount < 32;
+    const p = App.preParams || {};
+    const badList = p.badList || [];
+    const autoN = badList.filter((b) => b.source !== 'manual').length;
+    const manualN = badList.length - autoN;
+    const dirty = !!(App.preDirty || (App.badSegs || []).length);
+    const range = App.analysisRange || { start: 0, end: 10 };
+    const fmtTime = (s) => '00:' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+    const totalSecs = 10;
+    const rangePct = Math.max(0, Math.min(100, ((range.end - range.start) / totalSecs) * 100));
+    const rangeLeft = Math.max(0, Math.min(100, (range.start / totalSecs) * 100));
+    const summary = 'HP ' + (p.hp || '—') + ' / LP ' + (p.lp || '—') + ' / 陷波 ' + (p.notch || '—') + ' · ' + v1RerefLabel(p.rerefMode, p.rerefChannel);
+    const hpNum = String(p.hp || '0.5 Hz').split(' ')[0];
+    const lpNum = String(p.lp || '70 Hz').split(' ')[0];
+    const icaChip = icaDisabled ? 'ICA 关' : (p.ica === '使用' ? 'ICA 开' : p.ica === '不使用' ? 'ICA 关' : 'ICA 自动');
+    const badChip = '坏道 ×' + (v1BadNames().length);
+    const dockBody = `
+          <div class="dock-head">
+            <h3 style="margin:0">预处理与清洗设置 <span class="info-tip" title="自动清洗：推荐参数一键执行，可点击波形色带复核，每次应用生成可回退版本。">ⓘ</span></h3>
+            ${forceInline ? '' : '<button class="btn-link" id="btnPreClose" type="button" style="font-size:12px">▼ 收起</button>'}
+          </div>
+          <div class="dock-body">
+            <section class="dock-group t4" id="card-1">
+              <h4 class="pre-group">① 分析时间范围</h4>
+              <div style="display:flex;gap:6px;align-items:flex-end">
+                <div class="field" style="flex:1;margin:0"><span>开始</span><input class="input" id="preStart" value="${fmtTime(range.start)}"></div>
+                <span style="padding-bottom:9px;color:#8aa0b5">—</span>
+                <div class="field" style="flex:1;margin:0"><span>结束</span><input class="input" id="preEnd" value="${fmtTime(range.end)}"></div>
+              </div>
+              <p class="field-note" style="margin-top:6px">拖拽波形上的蓝色区间或手柄调整。</p>
+              </section>
+            <section class="dock-group t4" id="card-2">
+                <h4 class="pre-group">② 滤波</h4>
+                <div class="grid-2" style="grid-template-columns:repeat(3,1fr)">
+                  <div class="field"><span>高通</span><select class="select" id="preHp"><option${p.hp === '0.5 Hz' ? ' selected' : ''}>0.5 Hz</option><option${p.hp === '0.1 Hz' ? ' selected' : ''}>0.1 Hz</option><option${p.hp === '关闭' ? ' selected' : ''}>关闭</option></select></div>
+                  <div class="field"><span>低通</span><select class="select" id="preLp"><option${p.lp === '70 Hz' ? ' selected' : ''}>70 Hz</option><option${p.lp === '45 Hz' ? ' selected' : ''}>45 Hz</option><option${p.lp === '关闭' ? ' selected' : ''}>关闭</option></select></div>
+                  <div class="field"><span>陷波</span><select class="select" id="preNotch"><option${p.notch === '50 Hz' ? ' selected' : ''}>50 Hz</option><option${p.notch === '60 Hz' ? ' selected' : ''}>60 Hz</option><option${p.notch === '关闭' ? ' selected' : ''}>关闭</option></select></div>
+                </div>
+              </section>
+            <section class="dock-group t4" id="card-3">
+              <h4 class="pre-group">③ 去噪与伪迹</h4>
+              <div class="grid-2">
+                <div class="field"><span>振幅去噪阈值</span><div class="input-addon"><input class="input" id="preArt" type="number" value="${p.art || '200'}"><span class="addon">µV</span></div></div>
+                <div class="field"><span>坏段检测阈值</span><div class="input-addon"><input class="input" id="preBadArt" type="number" value="${p.badArt || '200'}"><span class="addon">µV</span></div></div>
+                  <div class="field"><span>坏段处理</span><select class="select" id="preBadPolicy"><option${p.policy === '完全删除' ? ' selected' : ''}>完全删除</option><option${p.policy === '用 0 替代' ? ' selected' : ''}>用 0 替代</option></select></div>
+                  <div class="field"><span>ICA 伪迹去除</span>${icaDisabled
+                    ? '<select class="select" id="preIca" disabled><option>不使用（<32 通道）</option></select>'
+                    : '<select class="select" id="preIca"><option>自动（' + icaDefault + '）</option><option>使用</option><option>不使用</option></select>'}</div>
+                </div>
+              <p class="field-note${icaDisabled ? '' : ' note-warn'}">${icaDisabled ? '当前 ' + chCount + ' 通道，ICA 分解不稳定，默认不使用。' : 'ICA 自动判断：通道数 ≥32 默认使用，成分判读需人工确认。'}</p>
+              </section>
+            <section class="dock-group t6" id="card-4">
+              <h4 class="pre-group">④ 参考设置</h4>
+              <div class="reref-modes">
+                <button class="reref-mode ${p.rerefMode === 'none' ? 'on' : ''}" data-reref="none" type="button">保留原始参考</button>
+                <button class="reref-mode ${p.rerefMode === 'avg' ? 'on' : ''}" data-reref="avg" type="button">平均参考</button>
+                <button class="reref-mode ${p.rerefMode === 'chan' ? 'on' : ''}" data-reref="chan" type="button">指定通道参考</button>
+              </div>
+              <p class="field-note" style="margin-top:6px">相邻通道差分（双极）暂不可配置（需通道配对）</p>
+              ${p.rerefMode === 'chan' ? `
+              <div class="reref-pick" style="margin-top:8px">
+                <div style="display:flex;gap:8px;align-items:flex-end">
+                  <div class="field" style="flex:1;margin:0"><span>参考通道</span>
+                    <select class="select" id="rerefChannelSel">${v1DemoChannels().map(function (ch) { return '<option value="' + ch.name + '"' + (p.rerefChannel === ch.name ? ' selected' : '') + '>' + ch.name + (ch.role !== 'EEG' ? ' · ' + ch.role : '') + '</option>'; }).join('')}</select>
+                  </div>
+                  <button class="btn-sub" id="btnRerefPickWave" type="button" title="在波形上点选参考通道">⌖ 点选</button>
+                </div>
+                <div class="quick-chips" style="margin-top:6px"><span class="muted small">常用：</span>${['Cz', 'Fz', 'FCz', 'Oz'].map(function (n) { return '<button class="chip" data-quick-ref="' + n + '" type="button" style="cursor:pointer">' + n + '</button>'; }).join('')}</div>
+              </div>` : ''}
+            </section>
+            <section class="dock-group t6" id="card-5">
+              <h4 class="pre-group">⑤ 坏道与插值</h4>
+              <div class="bad-head" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span class="small" style="font-weight:600;color:var(--muted)">坏道</span>
+                <b id="badCount">${badList.length}/${chCount}</b><span class="info-tip" title="坏道数/总通道数；自动与手动为坏道来源">ⓘ</span>
+                <span class="muted small">（自动 ${autoN} · 手动 ${manualN}）</span>
+                <button class="btn-sub" id="btnBadDetect" type="button" style="margin-left:auto" title="演示：按振幅/梯度规则生成候选坏道">自动检测</button>
+              </div>
+              ${App.badCandidates && App.badCandidates.length ? '<div style="margin-top:8px;padding:8px 10px;background:#fdf6e3;border:1px solid #ecd3a6;border-radius:8px;font-size:12px"><b style="color:#a4741d">候选坏道：</b>' + App.badCandidates.map(function (c) { return '<span class="bad-tag manual" style="margin-right:6px">' + c.name + ' · ' + c.reason + '</span>'; }).join('') + '<button class="btn-sub" id="btnBadConfirm" type="button" style="margin-left:8px">确认</button> <button class="btn-link" id="btnBadIgnore" type="button" style="font-size:12px">忽略</button></div>' : ''}
+              <div class="bad-tags" id="badTags">${badList.length ? badList.map(function (b) { return '<span class="bad-tag ' + b.source + '">' + b.name + (b.reason ? ' · ' + b.reason : '') + '<button class="bad-rm" data-bad-rm="' + b.name + '" type="button" title="移除">×</button></span>'; }).join('') : '<span class="muted small">未检测到坏道</span>'}</div>
+              <div class="grid-2" style="gap:8px 12px;margin-top:8px">
+                <div class="field"><span>手动添加坏道</span><select class="select" id="badAddSel">${v1DemoChannels().map(function (ch) { const used = badList.some(function (b) { return b.name === ch.name; }); return '<option value="' + ch.name + '"' + (used ? ' disabled' : '') + '>' + ch.name + (ch.role !== 'EEG' ? ' · ' + ch.role : '') + (used ? '（已添加）' : '') + '</option>'; }).join('')}</select></div>
+                <div class="field"><span>插值方法</span><select class="select" id="preBadChan" ${badList.length ? '' : 'disabled'}><option${p.badChan === '启用（球形插值）' ? ' selected' : ''}>启用（球形插值）</option><option${p.badChan === '关闭' ? ' selected' : ''}>关闭</option></select></div>
+              </div>
+              <p class="field-note" id="badNote">${badList.length ? (p.badChan === '启用（球形插值）' ? '检测到 ' + badList.length + ' 个坏道，将进行球形插值' : '坏道将被标记，但不插值') : '未检测到坏道，插值将跳过'}</p>
+            </section>
+            <div id="preHistoryBody" hidden class="dock-group t12">
+              <h4 class="pre-group">版本链</h4>
+              ${pre.length ? '<table class="table"><thead><tr><th>版本</th><th>模板</th><th>参数摘要</th><th>应用时间</th></tr></thead><tbody>' + preRows + '</tbody></table>' : '<div class="muted small">暂无处理版本；应用预处理后在此留痕。</div>'}
+              <h4 class="pre-group">操作记录</h4>
+              ${logs.length ? '<div class="trail-list">' + logs.map(function (l) { return '<div class="trail-card"><div class="trail-time">' + l.time + '</div><div class="trail-action">' + l.action + '</div><div class="trail-meta">' + l.summary + '</div></div>'; }).join('') + '</div>' : '<div class="muted small">暂无处理记录；应用预处理后在此留痕。</div>'}
+            </div>
+          </div>
+          <div class="dock-foot">
+            <div class="param-tags" id="preApplyNote">
+              <span class="chip" data-go-card="card-2" style="cursor:pointer" title="跳转到滤波">HP ${p.hp || '—'}</span>
+              <span class="chip" data-go-card="card-2" style="cursor:pointer" title="跳转到滤波">LP ${p.lp || '—'}</span>
+              <span class="chip" data-go-card="card-2" style="cursor:pointer" title="跳转到滤波">陷波 ${p.notch || '—'}</span>
+              <span class="chip" data-go-card="card-1" style="cursor:pointer" title="跳转到时间范围">区间 ${fmtTime(range.start)}–${fmtTime(range.end)}</span>
+              <span class="chip" data-go-card="card-3" style="cursor:pointer" title="跳转到去噪">坏段 ${p.policy || '—'}</span>
+              <span class="chip" data-go-card="card-3" style="cursor:pointer" title="跳转到去噪">ICA ${icaDisabled ? '不使用' : (p.ica || '自动')}</span>
+              <span class="chip" data-go-card="card-4" style="cursor:pointer" title="跳转到参考设置">${v1RerefLabel(p.rerefMode, p.rerefChannel)}</span>
+              <button class="btn-link" id="btnTrailToggle" type="button" style="font-size:12px">操作记录${logs.length ? ' · ' + logs.length : ''} ▾</button>
+            </div>
+            <div class="btn-row" style="justify-content:flex-end;align-items:center;gap:10px;flex:0 0 auto">
+              <button class="btn primary" id="btnPreApply" type="button">一键自动清洗（生成版本）</button>
+              <button class="btn-sub" id="btnPreUndo" type="button" ${pre.length ? '' : 'disabled'}>撤销版本</button>
+              <button class="btn-sub" id="btnPreExport" type="button">导出</button>
+            </div>
+          </div>
+`;
+    if (forceInline) {
+      return '<div class="dock-panel" style="display:flex;width:auto;max-width:none;border:1px solid var(--border);border-radius:8px;margin-top:10px">' + dockBody + '</div>';
+    }
     return `
-      <div class="drawer-backdrop" id="preBackdrop" hidden></div>
-      <div class="drawer-right" id="preDrawer" hidden>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-          <h3 style="margin:0">数据清洗与预处理</h3>
-          <span class="badge gray">${latest ? latest.id : '原始'}</span>
-          <button class="btn" id="btnPreClose" type="button">关闭</button>
+      <aside class="param-dock ${App.dockOpen ? 'open' : ''}" id="preDock">
+        <div class="dock-rail" id="dockRail" title="展开预处理设置">
+          <span class="rail-icon">▤</span><span class="rail-label">预处理和数据清洗</span>
+          <span class="pd-group pd-summary">
+            <span class="chip">${hpNum}–${lpNum} Hz</span>
+            <span class="chip">${icaChip}</span>
+            <span class="chip">${badChip}</span>
+            <span class="chip chip-range">区间 ${fmtTime(range.start)}–${fmtTime(range.end)}</span>
+          </span>
+          ${dirty ? '<span class="badge warn">未应用</span><span class="rail-dot" title="有未应用更改"></span>' : ''}
+          <span style="flex:1"></span>
+          <span class="muted small">展开 ▴</span>
         </div>
-        <div class="auth-tabs" style="margin-top:12px">
-          <button class="auth-tab ${cleanMode === 'auto' ? 'on' : ''}" id="modeAuto" type="button">自动清洗</button>
-          <button class="auth-tab ${cleanMode === 'manual' ? 'on' : ''}" id="modeManual" type="button">手动清洗</button>
-        </div>
-        <div class="notice info" style="margin:10px 0 0">自动模式使用推荐参数一键清洗并生成 QC 报告；手动模式按算子逐步执行；两者共用同一算子链，结果可复现。</div>
-        <h4 class="pre-group">分析时间范围</h4>
-        <div class="grid-2">
-          <div class="field"><span>开始</span><input class="input" id="preStart" value="00:00:00"></div>
-          <div class="field"><span>结束</span><input class="input" id="preEnd" value="06:12:00"></div>
-        </div>
-        <h4 class="pre-group">滤波</h4>
-        <div class="grid-2" style="grid-template-columns:repeat(3,1fr)">
-          <div class="field"><span>高通（Hz）</span><select class="select" id="preHp"><option>0.5 Hz</option><option>0.1 Hz</option><option>关闭</option></select></div>
-          <div class="field"><span>低通（Hz）</span><select class="select" id="preLp"><option>70 Hz</option><option>45 Hz</option><option>关闭</option></select></div>
-          <div class="field"><span>陷波</span><select class="select" id="preNotch"><option>50 Hz</option><option>60 Hz</option><option>关闭</option></select></div>
-        </div>
-        <h4 class="pre-group">去噪与伪迹</h4>
-        <div class="grid-2">
-          <div class="field"><span>振幅去噪阈值（µV）</span><input class="input" id="preArt" type="number" value="200"></div>
-          <div class="field"><span>坏段检测阈值（µV）</span><input class="input" id="preBadArt" type="number" value="200"></div>
-          <div class="field"><span>坏段处理</span><select class="select" id="preBadPolicy"><option>完全删除</option><option>用 0 替代</option></select></div>
-          <div class="field"><span>ICA 伪迹去除</span><select class="select" id="preIca"><option>自动（${icaDefault}）</option><option>使用</option><option>不使用</option></select></div>
-        </div>
-        <p class="muted small" style="margin:0">ICA 自动判断：通道数 ≥32 默认使用，<32 默认不使用；成分判读需人工确认。</p>
-        <h4 class="pre-group">参考与坏道</h4>
-        <div class="grid-2">
-          <div class="field"><span>重参考</span><select class="select" id="preReref"><option>平均参考</option><option>双极参考</option><option>不重参考</option></select></div>
-          <div class="field"><span>坏道插值</span><select class="select" id="preBadChan"><option>启用（球形插值）</option><option>关闭</option></select></div>
-        </div>
-        <h4 class="pre-group">自动 QC 摘要</h4>
-        <div id="qcSummary" class="muted small" style="padding:8px 10px;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px">尚未运行 QC；点击「一键自动清洗」后生成噪声 / 振幅 / 坏道 / 坏段报告。</div>
-        <div class="muted small" id="preApplyNote" style="margin:8px 0 0">将应用：HP 0.5 / LP 70 / 陷波 50 / 分析时间范围 00:00:00–06:12:00 · 坏段处理：完全删除 · ICA：自动（不使用）</div>
-        <div class="btn-row" style="justify-content:space-between;align-items:center;margin-top:10px">
-          <button class="btn primary" id="btnPreApply" type="button">${cleanMode === 'auto' ? '一键自动清洗（生成版本）' : '应用当前步骤（生成版本）'}</button>
-          <button class="btn-link" id="btnPreExport" type="button" style="font-size:13px">导出处理后数据 →</button>
-        </div>
-        <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
-          <div id="preHistoryToggle" role="button" tabindex="0" style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <span class="small" style="font-weight:600;color:var(--muted)">留痕</span>
-            <span class="small muted" id="preHistorySummary">${histSummary}</span>
-            <span style="flex:1"></span>
-            <span class="small muted" id="preHistoryArrow">展开 ▾</span>
-          </div>
-          <div id="preHistoryBody" hidden style="margin-top:8px">
-            <h4 style="margin:8px 0 6px">处理版本链</h4>
-            ${pre.length ? '<table class="table"><thead><tr><th>版本</th><th>模板</th><th>参数摘要</th><th>应用时间</th></tr></thead><tbody>' + preRows + '</tbody></table>' : '<div class="muted small">暂无处理版本；应用预处理后在此留痕。</div>'}
-            <h4 style="margin:10px 0 6px">处理记录</h4>
-            ${logs.length ? '<table class="table"><thead><tr><th>时间</th><th>操作</th><th>参数摘要</th><th>生成版本</th></tr></thead><tbody>' + logs.map(function (l) { return '<tr><td>' + l.time + '</td><td>' + l.action + '</td><td class="small muted">' + l.summary + '</td><td>' + (l.version || '—') + '</td></tr>'; }).join('') + '</tbody></table>' : '<div class="muted small">暂无处理记录；应用预处理后在此留痕。</div>'}
-          </div>
-        </div>
-      </div>`;
+        <div class="dock-panel">${dockBody}</div>
+      </aside>`;
   }
 
   function infoDrawerHtml() {
     const qf = App.quickFile;
     const d = DEMO.quick;
     return `
-      <div class="drawer-backdrop" id="infoBackdrop" hidden></div>
-      <div class="drawer-right" id="infoDrawer" hidden>
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <h3 style="margin:0">数据信息</h3>
-          <button class="btn" id="btnInfoClose" type="button">关闭</button>
+      <div class="modal-backdrop" id="infoBackdrop" hidden></div>
+      <div class="modal-card" id="infoDrawer" hidden>
+        <div class="modal-head">
+          <h3 style="margin:0;font-size:14px">数据信息</h3>
+          <button class="btn" id="btnInfoClose" type="button">×</button>
         </div>
         ${table([
           ['文件', qf ? qf.name : d.file],
@@ -2637,64 +2933,179 @@ function skeletonPage() {
       </div>`;
   }
 
+  function eventModalHtml() {
+    const evs = v1DemoEvents().filter(function (e) { return !(App.eventFilter && App.eventFilter.length) || App.eventFilter.indexOf(e.label) >= 0; });
+    const idx = App.eventIdx == null ? 0 : App.eventIdx;
+    return `
+      <div class="modal-backdrop" id="eventBackdrop" hidden></div>
+      <div class="modal-card" id="eventModal" hidden>
+        <div class="modal-head">
+          <h3 style="margin:0;font-size:14px">事件列表</h3>
+          <button class="btn" id="btnEventClose" type="button">×</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="chip ${!App.eventFilter.length ? 'on' : ''}" data-ev-filter="all" type="button" style="cursor:pointer">全部</button>
+          ${['N1', 'N2', 'REM', 'Spike'].map(function (t) { return '<button class="chip ' + (App.eventFilter.indexOf(t) >= 0 ? 'on' : '') + '" data-ev-filter="' + t + '" type="button" style="cursor:pointer">' + t + '</button>'; }).join('')}
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <button class="btn-sub" id="btnEvPrev" type="button">◀ 上一</button>
+          <button class="btn-sub" id="btnEvNext" type="button">下一 ▶</button>
+          <span class="muted small" id="evPos">${evs.length ? (idx + 1) + ' / ' + evs.length : '无事件'}</span>
+        </div>
+        ${evs.length ? '<table class="table"><thead><tr><th>类型</th><th>标签</th><th>时间</th><th></th></tr></thead><tbody>' + evs.map(function (e, i) { return '<tr class="' + (i === idx ? 'ev-now' : '') + '" data-ev-go="' + e.t + '" style="cursor:pointer"><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (e.kind === 'spike' ? '#e46a50' : '#3f7fd6') + '"></span> ' + (e.kind === 'spike' ? '异常事件' : '睡眠分期') + '</td><td>' + e.label + '</td><td>' + e.t.toFixed(1) + ' s</td><td class="muted small">定位 →</td></tr>'; }).join('') + '</tbody></table>' : '<div class="muted small">当前筛选下无事件。</div>'}
+      </div>`;
+  }
+
+  function keyModalHtml() {
+    const keys = [
+      ['− / +', '缩短 / 扩展时间窗'],
+      ['← / →', '上一窗 / 下一窗'],
+      ['Home', '回到起点'],
+      ['Z', '框选放大（Esc 还原）'],
+      ['M', '测量十字线（单击固定两点）'],
+      ['A', '注释打标（点击波形添加）'],
+      ['Esc', '退出当前工具模式']
+    ];
+    return `
+      <div class="modal-backdrop" id="keyBackdrop" hidden></div>
+      <div class="modal-card" id="keyModal" hidden>
+        <div class="modal-head">
+          <h3 style="margin:0;font-size:14px">快捷键</h3>
+          <button class="btn" id="btnKeyClose" type="button">×</button>
+        </div>
+        <table class="table"><thead><tr><th>按键</th><th>功能</th></tr></thead><tbody>${keys.map(function (k) { return '<tr><td><code>' + k[0] + '</code></td><td>' + k[1] + '</td></tr>'; }).join('')}</tbody></table>
+      </div>`;
+  }
+
+  function channelModalHtml() {
+    const chs = v1DemoChannels();
+    const bads = v1BadNames();
+    return `
+      <div class="modal-backdrop" id="chanBackdrop" hidden></div>
+      <div class="modal-card" id="chanModal" hidden style="width:min(660px,94vw)">
+        <div class="modal-head">
+          <h3 style="margin:0;font-size:14px">通道管理</h3>
+          <button class="btn" id="btnChanClose" type="button">×</button>
+        </div>
+        <p class="muted small" style="margin:0 0 8px">显隐、排序、单通道增益与坏道标记；重参考在「④ 参考设置」卡片。</p>
+        <div style="max-height:52vh;overflow-y:auto">
+          <table class="table"><thead><tr><th>可见</th><th>通道</th><th>类型</th><th>增益 µV/格</th><th>坏道</th><th>排序</th></tr></thead><tbody>
+          ${chs.map(function (c, i) {
+            return '<tr><td><input type="checkbox" data-chan-vis="' + c.name + '"' + (App.channelHidden.indexOf(c.name) >= 0 ? '' : ' checked') + '></td><td>' + c.name + '</td><td class="muted small">' + c.role + '</td><td><input class="input" type="number" data-chan-gain="' + c.name + '" value="' + (App.chanGain[c.name] || (App.viewGain || 100)) + '" style="width:86px;padding:4px 8px"></td><td><button class="btn-sub" data-chan-bad="' + c.name + '" type="button">' + (bads.indexOf(c.name) >= 0 ? '取消坏道' : '标记坏道') + '</button></td><td><button class="btn-link" data-chan-up="' + i + '" type="button">↑</button> <button class="btn-link" data-chan-down="' + i + '" type="button">↓</button></td></tr>';
+          }).join('')}
+          </tbody></table>
+        </div>
+      </div>`;
+  }
+
   function quickOverviewPage() {
     const qf = App.quickFile;
     const d = DEMO.quick;
     const pre = App.preVersions || [];
-    const allCh = v1DemoChannels();
+    const allCh = orderedChannels();
     const showAll = !!App.overviewAllCh;
     const waveCh = showAll ? allCh : allCh.slice(0, 6);
     const qcOk = !!(App.importState && App.importState.ok);
     const viewStart = App.viewStart || 0;
     const viewSecs = App.viewSecs || 10;
     const viewGain = App.viewGain || 100;
-    const viewVersion = App.viewVersion || 'raw';
+    const viewMode = App.viewMode || 'raw';
     const latest = pre.length ? pre[pre.length - 1].id : null;
     const totalSecs = 10;
     const navMax = Math.max(0, totalSecs - viewSecs);
+    const range = App.analysisRange || { start: 0, end: totalSecs };
+    const dockOpen = !!App.dockOpen;
+    const p = App.preParams || {};
+    const dirty = !!(App.preDirty || (App.badSegs || []).length);
+    const fmtTime = (s) => '00:' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+    const summary = 'HP ' + (p.hp || '—') + ' / LP ' + (p.lp || '—') + ' / 陷波 ' + (p.notch || '—') + ' · ' + (p.reref || '—') + (dirty ? ' · 有未应用更改' : '');
+    const rangePct = Math.max(0, Math.min(100, ((range.end - range.start) / totalSecs) * 100));
+    const rangeLeft = Math.max(0, Math.min(100, (range.start / totalSecs) * 100));
     return `
       <div class="page-head">
-        <div><h2>原始数据</h2><p class="desc">观察原始波形，按需打开数据信息与数据清洗抽屉。</p></div>
+        <div><h2>数据预览与预处理</h2><p class="desc">先看原始波形，再配置清洗；分析时间范围与伪迹标记直接在波形上选择与复核。</p></div>
       </div>
       ${quickSteps(2)}
-      <div class="card" style="padding:14px 16px">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:14px;font-weight:600;color:#284880">${qf ? qf.name : d.file}</span>
-          <span class="badge gray">${d.rate}</span>
-          <span class="badge gray">${d.ch}</span>
-          <span class="badge gray">${d.dur}</span>
-          <span class="badge ${qcOk ? 'ok' : 'warn'}">${qcOk ? '校验通过' : '待校验'}</span>
-          <span class="badge gray">${viewVersion === 'processed' && latest ? latest : '原始'}</span>
-          <span class="muted small" id="viewPosLabel">位置 ${viewStart.toFixed(1)}–${(viewStart + viewSecs).toFixed(1)} s</span>
-          <span style="flex:1"></span>
-          <button class="btn" id="btnInfoDrawer" type="button">数据信息</button>
-          <button class="btn" id="btnPreDrawer" type="button">数据清洗与预处理</button>
+      <div class="card grow" style="padding:14px 16px">
+        <div class="preview-workbench">
+          <div class="canvas-col">
+            <div class="viewer-toolbar" style="display:flex;align-items:center;gap:8px;margin-top:10px">
+              <button class="btn" id="btnZoomOut" type="button" title="缩短时间窗（−）">−</button>
+              <button class="btn" id="btnZoomIn" type="button" title="扩展时间窗（+）">＋</button>
+              <select class="select" id="viewPreset" style="width:auto" title="时窗预设">
+                <option value="2"${viewSecs === 2 ? ' selected' : ''}>2 s/页</option>
+                <option value="5"${viewSecs === 5 ? ' selected' : ''}>5 s/页</option>
+                <option value="10"${viewSecs >= 10 ? ' selected' : ''}>10 s/页</option>
+              </select>
+              <span class="sep"></span>
+              <button class="btn" id="btnViewStart" type="button" title="回到起点（Home）">回到起点</button>
+              <button class="btn" id="btnPanL" type="button" title="上一窗（←）">◀</button>
+              <button class="btn" id="btnPanR" type="button" title="下一窗（→）">▶</button>
+              <span class="muted small" id="viewPage" style="white-space:nowrap">${viewStart.toFixed(1)}–${(viewStart + viewSecs).toFixed(1)} s / 全程 ${totalSecs.toFixed(1)} s</span>
+              <input type="range" id="viewNav" class="tb-secondary" min="0" max="${navMax}" step="0.5" value="${Math.min(viewStart, navMax)}" style="flex:1;min-width:100px">
+              <span class="sep"></span>
+              <select class="select" id="viewGain" style="width:auto" title="振幅灵敏度">
+                <option value="25"${viewGain === 25 ? ' selected' : ''}>25 µV/格</option>
+                <option value="50"${viewGain === 50 ? ' selected' : ''}>50 µV/格</option>
+                <option value="100"${viewGain === 100 ? ' selected' : ''}>100 µV/格</option>
+                <option value="200"${viewGain === 200 ? ' selected' : ''}>200 µV/格</option>
+              </select>
+              <button class="btn-sub" id="btnAutoGain" type="button" title="按当前视窗最大振幅自动适配增益">自动</button>
+              <button class="btn-sub" id="btnChanMgr" type="button" title="通道管理：显隐/排序/增益/坏道">通道</button>
+              <span class="sep"></span>
+              <button class="chip ${!App.segFilter.length || App.segFilter.indexOf('art') >= 0 ? 'on' : ''}" data-seg-legend="art" type="button" style="cursor:pointer;color:#b8860b" title="伪迹标记（点击筛选）">▮ 伪迹</button>
+              <button class="chip ${!App.segFilter.length || App.segFilter.indexOf('bad') >= 0 ? 'on' : ''}" data-seg-legend="bad" type="button" style="cursor:pointer;color:#c0392b" title="坏段标记（点击筛选）">▮ 坏段</button>
+              <button class="chip ${!App.segFilter.length || App.segFilter.indexOf('interp') >= 0 ? 'on' : ''}" data-seg-legend="interp" type="button" style="cursor:pointer;color:#2a5fae" title="插值段标记（点击筛选）">▮ 插值</button>
+              <span class="sep"></span>
+              <button class="btn ${viewMode === 'raw' ? 'primary' : ''}" id="btnViewRaw" type="button" title="查看原始波形">原始</button>
+              <button class="btn ${viewMode === 'preview' ? 'primary' : ''}" id="btnViewPreview" type="button" title="查看滤波预览（未应用）">滤波预览</button>
+              <button class="btn ${viewMode === 'processed' ? 'primary' : ''}" id="btnViewProcessed" type="button" title="查看已应用版本">已应用</button>
+              <span class="sep"></span>
+              <button class="btn ${App.zoomRectMode ? 'primary' : ''}" id="btnZoomRect" type="button" title="框选放大（Z）：拖拽矩形缩放到该范围，Esc 还原">⛶ 框选</button>
+              <button class="btn ${App.measureMode ? 'primary' : ''}" id="btnMeasure" type="button" title="测量十字线（M）：悬停读数，单击固定两点计算 Δt/ΔμV">✛ 测量</button>
+              <button class="btn-sub" id="btnAnnotate" type="button" title="注释编辑（V2 规划中）">✎ 注释</button>
+              <span class="sep"></span>
+              <button class="btn-sub tb-secondary" id="btnUseViewport" type="button" title="以当前查看窗口作为分析时间范围">以视窗为分析区间</button>
+              <button class="btn-sub tb-secondary" id="btnWaveToggle" type="button">${showAll ? '收起通道（前 6）' : '展开全部通道（' + allCh.length + '）'}</button>
+              <button class="btn-sub tb-secondary" id="btnInfoDrawer" type="button">数据信息</button>
+              <div class="tb-overflow">
+                <button class="btn" id="tbMore" type="button" title="更多工具">⋯</button>
+                <div class="tb-menu" id="tbMenu" hidden>
+                  <label class="muted small" style="display:block">时间导航</label>
+                  <input type="range" id="tbMenuNav" min="0" max="${navMax}" step="0.5" value="${Math.min(viewStart, navMax)}" style="width:100%">
+                  <button class="btn" id="tbMenuUseViewport" type="button">以视窗为分析区间</button>
+                  <button class="btn" id="tbMenuWaveToggle" type="button">${showAll ? '收起通道（前 6）' : '展开全部通道（' + allCh.length + '）'}</button>
+                  <button class="btn" id="tbMenuEvents" type="button">事件列表</button>
+                  <button class="btn" id="tbMenuKeys" type="button">快捷键帮助</button>
+                  <button class="btn" id="tbMenuInfo" type="button">数据信息</button>
+                </div>
+              </div>
+            </div>
+            <div class="preview-canvas" id="previewCanvasWrap">
+              ${App.rerefPickMode ? '<div class="pick-bar" id="rerefPickBar">点击波形中的通道行以选择参考通道 <button class="btn-link" id="btnRerefPickCancel" type="button" style="margin-left:8px">取消</button></div>' : ''}
+              ${v1WaveSvgHtml({ channels: waveCh, events: v1DemoEvents(), badSegs: App.badSegs || [], artifactSegs: App.artifactSegs || [], interpSegs: App.interpSegs || [], badChans: v1BadNames(), analysisRange: range, tmpRange: App.tmpRange || null, previewFilter: viewMode === 'preview', seconds: viewSecs, start: viewStart, gain: viewGain, processed: viewMode === 'processed' })}
+              <div class="seg-popover" id="segPopover" hidden></div>
+              <div class="tool-overlay" id="zoomRectOverlay" ${App.zoomRectMode ? '' : 'hidden'}>
+                <div id="zoomRectBox" style="position:absolute;border:1px dashed #2a5fae;background:rgba(63,127,214,.15);display:none;pointer-events:none"></div>
+              </div>
+              <div class="tool-overlay" id="measureOverlay" ${App.measureMode ? '' : 'hidden'}>
+                <div id="crossV" style="position:absolute;top:0;bottom:0;width:1px;background:#2a5fae;opacity:.65;display:none;pointer-events:none"></div>
+                <div id="crossH" style="position:absolute;left:0;right:0;height:1px;background:#2a5fae;opacity:.65;display:none;pointer-events:none"></div>
+                <div id="measureReadout" style="position:absolute;top:8px;left:8px;padding:6px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;font-size:12px;color:#284880;box-shadow:0 4px 12px rgba(8,20,40,.14);pointer-events:none">测量：悬停读数，单击固定两点，Esc 退出</div>
+              </div>
+              <div class="tool-overlay" id="annotateOverlay" ${App.annotateMode ? '' : 'hidden'}>
+                <div id="annotateTip" style="position:absolute;top:8px;left:8px;padding:6px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;font-size:12px;color:#1e7d46;box-shadow:0 4px 12px rgba(8,20,40,.14);pointer-events:none">注释模式：点击波形位置添加注释（输入文字），Esc 退出</div>
+              </div>
+            </div>
+          </div>
+          ${preDockHtml()}
+          <div class="dock-backdrop" id="dockBackdrop"></div>
         </div>
-        <div class="viewer-toolbar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px">
-          <span class="muted small">时间</span>
-          <button class="btn" id="btnZoomOut" type="button" title="缩小时间范围">−</button>
-          <button class="btn" id="btnZoomIn" type="button" title="放大时间范围">＋</button>
-          <button class="btn" id="btnPanL" type="button">◀</button>
-          <button class="btn" id="btnPanR" type="button">▶</button>
-          <button class="btn" id="btnViewReset" type="button">回到全程</button>
-          <input type="range" id="viewNav" min="0" max="${navMax}" step="0.5" value="${Math.min(viewStart, navMax)}" style="flex:1;min-width:120px">
-          <span class="muted small">增益</span>
-          <select class="select" id="viewGain" style="width:auto">
-            <option value="25"${viewGain === 25 ? ' selected' : ''}>25 µV/格</option>
-            <option value="50"${viewGain === 50 ? ' selected' : ''}>50 µV/格</option>
-            <option value="100"${viewGain === 100 ? ' selected' : ''}>100 µV/格</option>
-            <option value="200"${viewGain === 200 ? ' selected' : ''}>200 µV/格</option>
-          </select>
-          <button class="btn" id="btnViewToggle" type="button">${viewVersion === 'processed' ? '查看原始' : '查看处理版本'}</button>
-          <button class="btn" id="btnWaveToggle" type="button" style="padding:4px 10px;font-size:12px">${showAll ? '收起通道（前 6）' : '展开全部通道（' + allCh.length + '）'}</button>
-        </div>
-        <div style="position:relative;margin-top:10px;max-height:420px;overflow:auto">
-          ${v1WaveSvgHtml({ channels: waveCh, events: v1DemoEvents(), badSegs: App.badSegs || [], seconds: viewSecs, start: viewStart, gain: viewGain, processed: viewVersion === 'processed' })}
-        </div>
-        <p class="muted small" style="margin:6px 0 0">缩放 / 平移 / 增益仅调整显示；「分析时间范围」在数据清洗抽屉中设置。</p>
       </div>
       ${infoDrawerHtml()}
-      ${prePanelHtml()}
+      ${eventModalHtml()}
+      ${keyModalHtml()}
+      ${channelModalHtml()}
       <div class="btn-row" style="justify-content:space-between">
         <button class="btn" id="btnQuickPrevOverview" type="button">← 上一步：导入文件</button>
         <button class="btn primary" id="btnQuickNextChoose" type="button">下一步：配置分析方案 →</button>
@@ -3446,7 +3857,7 @@ ${qeegSubjectCard}
     if (App.deploymentMode !== 'local') { toast('快速分析仅支持本地模式'); return; }
     if (App.workspaceMode !== 'quick') enterQuick();
     const seq = [
-      { d: 400, fn: () => { toast('演示 1/5：数据概览与预处理'); navigate('q-overview'); } },
+      { d: 400, fn: () => { toast('演示 1/5：数据预览与预处理'); navigate('q-overview'); } },
       { d: 1100, fn: () => { applyPreQuick(); toast('演示 2/5：已生成 ' + App.preVersions[App.preVersions.length - 1].id); } },
       { d: 1100, fn: () => { App.quickMethod = ['psd', 'bands']; toast('演示 3/5：预置方案（静息态频谱分析）'); navigate('q-custom'); } },
       { d: 1300, fn: () => { toast('演示 4/5：运行分析'); startQuickRun(['psd', 'bands'], true); } },
@@ -3625,19 +4036,16 @@ ${qeegSubjectCard}
     const updatePreApplyNote = () => {
       const el = $('preApplyNote');
       if (!el) return;
-      const hp = $('preHp') ? $('preHp').value : '关闭';
-      const lp = $('preLp') ? $('preLp').value : '关闭';
-      const notch = $('preNotch') ? $('preNotch').value : '关闭';
-      const start = $('preStart') ? $('preStart').value : '00:00:00';
-      const end = $('preEnd') ? $('preEnd').value : '06:12:00';
-      const badN = (App.badSegs || []).length;
-      const policy = $('preBadPolicy') ? $('preBadPolicy').value : '完全删除';
-      const ica = $('preIca') ? $('preIca').value : '自动';
-      const reref = $('preReref') ? $('preReref').value : '平均参考';
-      const dirty = !!(App.preDirty || badN);
+      const p = App.preParams || {};
+      const r = App.analysisRange || { start: 0, end: 10 };
+      const fmtTime = (s) => '00:' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+      const chCount = v1DemoChannels().length;
+      const icaDisabled = chCount < 32;
+      const dirty = !!(App.preDirty || (App.badSegs || []).length);
       el.className = dirty ? 'small pre-note-warn' : 'muted small';
-      el.style.cssText = 'margin:8px 0 0;' + (dirty ? 'padding:6px 9px;background:#fff7e6;border:1px solid #e8c36a;border-radius:6px;color:#7a6218' : '');
-      el.innerHTML = (dirty ? '<b>有未应用更改 · </b>' : '将应用：') + 'HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' / 分析时间范围 ' + start + '–' + end + ' · 坏段处理 ' + policy + ' · ICA ' + ica + ' · ' + reref + '（应用后波形更新为新版本，原版本保留）';
+      el.style.cssText = 'margin:0 0 8px;' + (dirty ? 'padding:6px 9px;background:#fff7e6;border:1px solid #e8c36a;border-radius:6px;color:#7a6218' : '');
+      const chips = [['HP ' + (p.hp || '—'), 'card-2'], ['LP ' + (p.lp || '—'), 'card-2'], ['陷波 ' + (p.notch || '—'), 'card-2'], ['区间 ' + fmtTime(r.start) + '–' + fmtTime(r.end), 'card-1'], ['坏段 ' + (p.policy || '—'), 'card-3'], ['ICA ' + (icaDisabled ? '不使用' : (p.ica || '自动')), 'card-3'], [v1RerefLabel(p.rerefMode, p.rerefChannel), 'card-4']];
+      el.innerHTML = (dirty ? '<b class="small" style="color:#a4741d">有未应用更改</b>' : '') + chips.map(function (c) { return '<span class="chip" data-go-card="' + c[1] + '" style="cursor:pointer" title="跳转到对应卡片">' + c[0] + '</span>'; }).join('');
     };
     const preTpl = $('preTpl');
     if (preTpl) preTpl.addEventListener('change', () => {
@@ -3666,21 +4074,30 @@ ${qeegSubjectCard}
       const end = $('preEnd') ? $('preEnd').value : '06:12:00';
       const policy = $('preBadPolicy') ? $('preBadPolicy').value : '完全删除';
       const ica = $('preIca') ? $('preIca').value : '自动';
-      const reref = $('preReref') ? $('preReref').value : '平均参考';
+      const reref = v1RerefLabel((App.preParams || {}).rerefMode, (App.preParams || {}).rerefChannel);
+      const badNames = v1BadNames();
       const badchan = $('preBadChan') ? $('preBadChan').value : '启用（球形插值）';
       const now = new Date().toLocaleTimeString('zh-CN', { hour12: false });
-      const actionName = (App.cleanMode === 'auto' ? '一键自动清洗' : '应用清洗步骤');
-      App.preVersions.push({ id: 'Preprocess-' + n, tpl, summary: 'HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' / 坏段 ' + bad + 'μV / 伪迹 ' + art + 'μV / 分析时间范围 ' + start + '–' + end + ' / 坏段处理 ' + policy + ' / ICA ' + ica + ' / ' + reref + ' / ' + badchan + '（参数版本 pre-D02）', appliedAt: '2026-08-06 ' + now });
-      App.preLog.push({ time: '2026-08-06 ' + now, action: actionName, summary: '分析时间范围 ' + start + '–' + end + ' · HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' · 坏段处理 ' + policy + ' · ICA ' + ica + '（参数版本 pre-D02）', version: 'Preprocess-' + n });
+      const actionName = '一键自动清洗';
+      App.preVersions.push({ id: 'Preprocess-' + n, tpl, summary: 'HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' / 坏段 ' + bad + 'μV / 伪迹 ' + art + 'μV / 分析时间范围 ' + start + '–' + end + ' / 坏段处理 ' + policy + ' / ICA ' + ica + ' / ' + reref + ' / 坏道 ' + (badNames.length ? badNames.join(',') : '无') + ' / ' + badchan + '（参数版本 pre-D02）', appliedAt: '2026-08-06 ' + now });
+      App.preLog.push({ time: '2026-08-06 ' + now, action: actionName, summary: '分析时间范围 ' + start + '–' + end + ' · HP ' + hp + ' / LP ' + lp + ' / 陷波 ' + notch + ' · ' + reref + ' · 坏道 ' + (badNames.length ? badNames.join(',') : '无') + ' · ' + badchan + '（参数版本 pre-D02）', version: 'Preprocess-' + n });
       App.badSegs = [];
       App.preUndo = [];
       App.preRedo = [];
       App.preDirty = false;
-      App.viewVersion = 'processed';
-      const qc = $('qcSummary');
-      if (qc) qc.innerHTML = '<b>QC 摘要：</b>噪声 3.2% · 振幅超标段 0 · 坏道 1（Cz 已插值）· 坏段 2 段（' + policy + '）· ICA ' + ica + '；参数快照已写入版本。';
+      App.viewMode = 'processed';
       render();
       toast('已生成清洗版本 Preprocess-' + n + '（不可变，不覆盖旧版本）；可在查看器中对比原始/处理版本。');
+    });
+    const btnPreUndo = $('btnPreUndo');
+    if (btnPreUndo) btnPreUndo.addEventListener('click', () => {
+      if (!(App.preVersions || []).length) { toast('没有可撤销的版本'); return; }
+      const v = App.preVersions.pop();
+      if (App.preLog && App.preLog.length) App.preLog.pop();
+      App.viewMode = App.preVersions.length ? 'processed' : 'raw';
+      App.preDirty = true;
+      render();
+      toast('已撤销版本 ' + v.id + '（回退到' + (App.preVersions.length ? App.preVersions[App.preVersions.length - 1].id : '原始') + '）');
     });
     // 批次①：坏段条（点击/拖拽标记）与撤销/重做/清空/导出
     const renderBadSegs = () => {
@@ -3791,34 +4208,499 @@ ${qeegSubjectCard}
     if (viewNav) {
       viewNav.addEventListener('input', () => {
         App.viewStart = Number(viewNav.value) || 0;
-        const lbl = $('viewPosLabel');
-        if (lbl) lbl.textContent = '位置 ' + App.viewStart.toFixed(1) + '–' + (App.viewStart + (App.viewSecs || 10)).toFixed(1) + ' s';
+        const vp = $('viewPage');
+        if (vp) vp.textContent = App.viewStart.toFixed(1) + '–' + (App.viewStart + (App.viewSecs || 10)).toFixed(1) + ' s / 全程 10.0 s';
       });
       viewNav.addEventListener('change', () => render());
     }
     const viewGainSel = $('viewGain');
     if (viewGainSel) viewGainSel.addEventListener('change', () => { App.viewGain = Number(viewGainSel.value) || 100; render(); });
-    const btnViewToggle = $('btnViewToggle');
-    if (btnViewToggle) btnViewToggle.addEventListener('click', () => {
-      App.viewVersion = App.viewVersion === 'processed' ? 'raw' : 'processed';
+    const btnViewRaw = $('btnViewRaw');
+    if (btnViewRaw) btnViewRaw.addEventListener('click', () => { App.viewMode = 'raw'; render(); });
+    const btnViewPreview = $('btnViewPreview');
+    if (btnViewPreview) btnViewPreview.addEventListener('click', () => { App.viewMode = 'preview'; render(); });
+    const btnViewProcessed = $('btnViewProcessed');
+    if (btnViewProcessed) btnViewProcessed.addEventListener('click', () => { App.viewMode = 'processed'; render(); });
+    const btnUseViewport = $('btnUseViewport');
+    if (btnUseViewport) btnUseViewport.addEventListener('click', () => {
+      const s = App.viewStart || 0, e = s + (App.viewSecs || 10);
+      if (!confirm('以当前查看窗口作为分析时间范围？现有区间将被覆盖。')) return;
+      App.analysisRange = { start: Math.max(0, s), end: Math.min(10, e) };
+      App.preDirty = true;
+      render();
+      toast('分析时间范围已设为 ' + s.toFixed(1) + '–' + e.toFixed(1) + ' s');
+    });
+    const closeTbMenu = () => { const m = $('tbMenu'); if (m) m.hidden = true; };
+    const tbMore = $('tbMore');
+    if (tbMore) tbMore.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const m = $('tbMenu');
+      if (m) m.hidden = !m.hidden;
+    });
+    const tbMenuNav = $('tbMenuNav');
+    if (tbMenuNav) tbMenuNav.addEventListener('input', () => {
+      App.viewStart = Number(tbMenuNav.value) || 0;
+      const lbl = $('viewPosLabel');
+      if (lbl) lbl.textContent = '位置 ' + App.viewStart.toFixed(1) + '–' + (App.viewStart + (App.viewSecs || 10)).toFixed(1) + ' s';
+    });
+    if (tbMenuNav) tbMenuNav.addEventListener('change', () => { render(); closeTbMenu(); });
+    const tbMenuUseViewport = $('tbMenuUseViewport');
+    if (tbMenuUseViewport) tbMenuUseViewport.addEventListener('click', () => {
+      closeTbMenu();
+      const s = App.viewStart || 0, e = s + (App.viewSecs || 10);
+      if (!confirm('以当前查看窗口作为分析时间范围？现有区间将被覆盖。')) return;
+      App.analysisRange = { start: Math.max(0, s), end: Math.min(10, e) };
+      App.preDirty = true;
+      render();
+      toast('分析时间范围已设为 ' + s.toFixed(1) + '–' + e.toFixed(1) + ' s');
+    });
+    const tbMenuWaveToggle = $('tbMenuWaveToggle');
+    if (tbMenuWaveToggle) tbMenuWaveToggle.addEventListener('click', () => {
+      closeTbMenu();
+      App.overviewAllCh = !App.overviewAllCh;
       render();
     });
+    const tbMenuInfo = $('tbMenuInfo');
+    if (tbMenuInfo) tbMenuInfo.addEventListener('click', () => {
+      closeTbMenu();
+      const d = $('infoDrawer'), bd = $('infoBackdrop');
+      if (d) d.hidden = false;
+      if (bd) bd.hidden = false;
+    });
+    // 工具栏：时窗预设 / 回到起点 / 页码
+    const viewPreset = $('viewPreset');
+    if (viewPreset) viewPreset.addEventListener('change', () => {
+      App.viewSecs = Math.min(10, Number(viewPreset.value) || 10);
+      App.viewStart = 0;
+      render();
+    });
+    const btnViewStart = $('btnViewStart');
+    if (btnViewStart) btnViewStart.addEventListener('click', () => { App.viewStart = 0; render(); });
+    const btnAutoGain = $('btnAutoGain');
+    if (btnAutoGain) btnAutoGain.addEventListener('click', () => {
+      const start = App.viewStart || 0, secs = App.viewSecs || 10;
+      let vmax = 0.01;
+      const chs = v1DemoChannels();
+      for (let i = 0; i < chs.length; i++) {
+        for (let t = start; t <= start + secs; t += 0.02) {
+          vmax = Math.max(vmax, Math.abs(v1WaveY(t, i, 1)));
+        }
+      }
+      const g = Math.max(5, Math.min(2000, Math.round((100 / vmax) / 10) * 10));
+      App.viewGain = g;
+      render();
+      toast('自动增益：' + g + ' µV/格（视窗峰值 ' + (vmax * 100).toFixed(0) + ' µV）');
+    });
+    document.querySelectorAll('[data-seg-legend]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const k = el.getAttribute('data-seg-legend');
+        App.segFilter = (App.segFilter || []).indexOf(k) >= 0 ? (App.segFilter || []).filter((x) => x !== k) : (App.segFilter || []).concat([k]);
+        render();
+      });
+    });
+    // 通道管理
+    const openChan = () => { const d = $('chanModal'), bd = $('chanBackdrop'); if (d) d.hidden = false; if (bd) bd.hidden = false; };
+    const closeChan = () => { const d = $('chanModal'), bd = $('chanBackdrop'); if (d) d.hidden = true; if (bd) bd.hidden = true; };
+    const btnChanMgr = $('btnChanMgr');
+    if (btnChanMgr) btnChanMgr.addEventListener('click', openChan);
+    const btnChanClose = $('btnChanClose');
+    if (btnChanClose) btnChanClose.addEventListener('click', closeChan);
+    const chanBackdrop = $('chanBackdrop');
+    if (chanBackdrop) chanBackdrop.addEventListener('click', closeChan);
+    document.querySelectorAll('[data-chan-vis]').forEach((el) => {
+      el.addEventListener('change', () => {
+        const name = el.getAttribute('data-chan-vis');
+        App.channelHidden = (App.channelHidden || []).indexOf(name) >= 0 ? (App.channelHidden || []).filter((x) => x !== name) : (App.channelHidden || []).concat([name]);
+        render();
+        openChan();
+      });
+    });
+    document.querySelectorAll('[data-chan-gain]').forEach((el) => {
+      el.addEventListener('change', () => {
+        App.chanGain = Object.assign({}, App.chanGain || {}, { [el.getAttribute('data-chan-gain')]: Number(el.value) || (App.viewGain || 100) });
+        render();
+        openChan();
+      });
+    });
+    document.querySelectorAll('[data-chan-bad]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const name = el.getAttribute('data-chan-bad');
+        const list = (App.preParams.badList || []).slice();
+        const has = list.some((b) => b.name === name);
+        App.preParams = Object.assign({}, App.preParams || {}, { badList: has ? list.filter((b) => b.name !== name) : list.concat([{ name, source: 'manual' }]) });
+        App.preDirty = true;
+        render();
+        openChan();
+      });
+    });
+    document.querySelectorAll('[data-chan-up], [data-chan-down]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const i = Number(el.getAttribute('data-chan-up') != null ? el.getAttribute('data-chan-up') : el.getAttribute('data-chan-down'));
+        const dir = el.hasAttribute('data-chan-up') ? -1 : 1;
+        const chs = v1DemoChannels();
+        const j = i + dir;
+        if (j < 0 || j >= chs.length) return;
+        const arr = chs.map((c) => c.name);
+        const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+        App.channelOrder = arr;
+        render();
+        openChan();
+      });
+    });
+    document.querySelectorAll('[data-go-card]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const card = document.getElementById(el.getAttribute('data-go-card'));
+        if (!card) return;
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.remove('card-flash');
+        void card.offsetWidth;
+        card.classList.add('card-flash');
+        setTimeout(() => card.classList.remove('card-flash'), 1300);
+      });
+    });
+    const updViewPage = () => {
+      const vp = $('viewPage');
+      if (vp) vp.textContent = (App.viewStart || 0).toFixed(1) + '–' + ((App.viewStart || 0) + (App.viewSecs || 10)).toFixed(1) + ' s / 全程 10.0 s';
+    };
+    // 模式切换（框选 / 测量 / 点选互斥）
+    const clearToolModes = () => { App.zoomRectMode = false; App.measureMode = false; App.rerefPickMode = false; App.annotateMode = false; App.measurePts = []; };
+    const btnZoomRect = $('btnZoomRect');
+    if (btnZoomRect) btnZoomRect.addEventListener('click', () => {
+      if (App.zoomRectMode) { clearToolModes(); render(); return; }
+      clearToolModes();
+      App.zoomRectMode = true;
+      App.prevView = { start: App.viewStart || 0, secs: App.viewSecs || 10 };
+      render();
+      toast('框选放大：在波形上拖拽矩形，Esc 还原');
+    });
+    const btnMeasure = $('btnMeasure');
+    if (btnMeasure) btnMeasure.addEventListener('click', () => {
+      if (App.measureMode) { clearToolModes(); render(); return; }
+      clearToolModes();
+      App.measureMode = true;
+      render();
+      toast('测量：悬停读数，单击固定两点，Esc 退出');
+    });
+    const btnAnnotate = $('btnAnnotate');
+    if (btnAnnotate) btnAnnotate.addEventListener('click', () => {
+      if (App.annotateMode) { clearToolModes(); render(); return; }
+      clearToolModes();
+      App.annotateMode = true;
+      render();
+      toast('注释模式：点击波形位置添加注释，Esc 退出');
+    });
+    const annotateOverlay = $('annotateOverlay');
+    if (annotateOverlay) annotateOverlay.addEventListener('click', (ev) => {
+      if (!App.annotateMode) return;
+      const r = annotateOverlay.getBoundingClientRect();
+      const t = (App.viewStart || 0) + ((ev.clientX - r.left) / r.width) * (App.viewSecs || 10);
+      const label = prompt('注释文字：', '注' + ((App.annotations || []).length + 1));
+      if (label === null || label.trim() === '') return;
+      App.annotations = (App.annotations || []).concat([{ t: Math.max(0, Math.min(10, t)), label: label.trim() }]);
+      render();
+    });
+    document.querySelectorAll('[data-ann-rm]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const t = Number(el.getAttribute('data-ann-rm'));
+        if (!confirm('删除该注释？')) return;
+        App.annotations = (App.annotations || []).filter((a) => Math.abs(a.t - t) > 0.001);
+        render();
+      });
+    });
+    // 框选放大交互
+    const zoomOverlay = $('zoomRectOverlay');
+    if (zoomOverlay) {
+      let zs = null;
+      zoomOverlay.addEventListener('mousedown', (ev) => {
+        if (!App.zoomRectMode) return;
+        const r = zoomOverlay.getBoundingClientRect();
+        zs = { x0: ev.clientX - r.left, y0: ev.clientY - r.top, x1: ev.clientX - r.left, y1: ev.clientY - r.top };
+        const box = $('zoomRectBox');
+        if (box) { box.style.left = zs.x0 + 'px'; box.style.top = zs.y0 + 'px'; box.style.width = '0px'; box.style.height = '0px'; box.style.display = 'block'; }
+        ev.preventDefault();
+      });
+      zoomOverlay.addEventListener('mousemove', (ev) => {
+        if (!zs || !App.zoomRectMode) return;
+        const r = zoomOverlay.getBoundingClientRect();
+        zs.x1 = ev.clientX - r.left; zs.y1 = ev.clientY - r.top;
+        const box = $('zoomRectBox');
+        if (box) {
+          box.style.left = Math.min(zs.x0, zs.x1) + 'px';
+          box.style.top = Math.min(zs.y0, zs.y1) + 'px';
+          box.style.width = Math.abs(zs.x1 - zs.x0) + 'px';
+          box.style.height = Math.abs(zs.y1 - zs.y0) + 'px';
+        }
+      });
+      zoomOverlay.addEventListener('mouseup', (ev) => {
+        if (!zs || !App.zoomRectMode) return;
+        const r = zoomOverlay.getBoundingClientRect();
+        zs.x1 = ev.clientX - r.left;
+        const x0 = Math.min(zs.x0, zs.x1), x1 = Math.max(zs.x0, zs.x1);
+        const box = $('zoomRectBox'); if (box) box.style.display = 'none';
+        const secs = App.viewSecs || 10;
+        const w = (x1 - x0) / r.width;
+        if (w < 0.03) { zs = null; return; }
+        const t0 = (App.viewStart || 0) + (x0 / r.width) * secs;
+        const newSecs = Math.max(0.5, w * secs);
+        App.viewStart = Math.max(0, Math.min(10 - newSecs, t0));
+        App.viewSecs = newSecs;
+        App.zoomRectMode = false;
+        zs = null;
+        render();
+        toast('已缩放到 ' + App.viewStart.toFixed(1) + '–' + (App.viewStart + newSecs).toFixed(1) + ' s（Esc 还原）');
+      });
+    }
+    // 测量十字线交互
+    const measureOverlay = $('measureOverlay');
+    const svgMeasure = () => {
+      const svg = $('previewWaveSvg');
+      if (!svg) return null;
+      const vb = svg.getAttribute('viewBox').split(' ').map(Number);
+      return { svg, vbW: vb[2], vbH: vb[3] };
+    };
+    const measureAt = (clientX, clientY) => {
+      const ov = measureOverlay, sm = svgMeasure();
+      if (!ov || !sm) return null;
+      const or = ov.getBoundingClientRect();
+      const sr = sm.svg.getBoundingClientRect();
+      const t = (App.viewStart || 0) + ((clientX - or.left) / or.width) * (App.viewSecs || 10);
+      const yVB = ((clientY - sr.top) / sr.height) * sm.vbH;
+      const topH = 58, rowH = 42;
+      const idx = Math.max(0, Math.min(63, Math.floor((yVB - topH) / rowH)));
+      const ch = (v1DemoChannels()[idx] || {}).name || '';
+      const yMid = topH + idx * rowH + rowH / 2;
+      const ampScale = ((App.viewGain || 100) / 100) * (rowH / 2 - 8) * 0.9;
+      const uV = ((yMid - yVB) / ampScale) * 100;
+      return { t: Math.max(0, Math.min(10, t)), ch, uV };
+    };
+    if (measureOverlay) {
+      measureOverlay.addEventListener('mousemove', (ev) => {
+        if (!App.measureMode) return;
+        const r = measureOverlay.getBoundingClientRect();
+        const cv = $('crossV'), ch2 = $('crossH'), rd = $('measureReadout');
+        if (cv) { cv.style.left = (ev.clientX - r.left) + 'px'; cv.style.display = 'block'; }
+        if (ch2) { ch2.style.top = (ev.clientY - r.top) + 'px'; ch2.style.display = 'block'; }
+        const m = measureAt(ev.clientX, ev.clientY);
+        if (rd && m) {
+          let txt = 't=' + m.t.toFixed(2) + ' s · ' + m.ch + ' · ' + (m.uV >= 0 ? '+' : '') + m.uV.toFixed(0) + ' µV';
+          if (App.measurePts.length === 1) {
+            const p0 = App.measurePts[0];
+            txt += '　Δt=' + Math.abs(m.t - p0.t).toFixed(2) + ' s · ΔµV=' + Math.abs(m.uV - p0.uV).toFixed(0);
+          }
+          rd.textContent = txt;
+        }
+      });
+      measureOverlay.addEventListener('click', (ev) => {
+        if (!App.measureMode) return;
+        const m = measureAt(ev.clientX, ev.clientY);
+        if (!m) return;
+        App.measurePts = App.measurePts || [];
+        if (App.measurePts.length >= 2) App.measurePts = [];
+        App.measurePts.push({ t: m.t, uV: m.uV, ch: m.ch });
+        const rd = $('measureReadout');
+        if (rd) {
+          if (App.measurePts.length === 2) {
+            const p0 = App.measurePts[0], p1 = App.measurePts[1];
+            rd.textContent = 'P1 ' + p0.t.toFixed(2) + 's/' + p0.uV.toFixed(0) + 'µV · P2 ' + p1.t.toFixed(2) + 's/' + p1.uV.toFixed(0) + 'µV · Δt=' + Math.abs(p1.t - p0.t).toFixed(2) + 's · ΔµV=' + Math.abs(p1.uV - p0.uV).toFixed(0);
+          } else {
+            rd.textContent = '已固定 P1：' + m.t.toFixed(2) + 's · ' + m.uV.toFixed(0) + 'µV；再单击固定 P2';
+          }
+        }
+      });
+    }
+    // 事件列表
+    const openEvents = () => {
+      const d = $('eventModal'), bd = $('eventBackdrop');
+      if (d) d.hidden = false;
+      if (bd) bd.hidden = false;
+    };
+    const closeEvents = () => { const d = $('eventModal'), bd = $('eventBackdrop'); if (d) d.hidden = true; if (bd) bd.hidden = true; };
+    const tbMenuEvents = $('tbMenuEvents');
+    if (tbMenuEvents) tbMenuEvents.addEventListener('click', () => { closeTbMenu(); openEvents(); });
+    const btnEventClose = $('btnEventClose');
+    if (btnEventClose) btnEventClose.addEventListener('click', closeEvents);
+    const eventBackdrop = $('eventBackdrop');
+    if (eventBackdrop) eventBackdrop.addEventListener('click', closeEvents);
+    document.querySelectorAll('[data-ev-filter]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const t = el.getAttribute('data-ev-filter');
+        App.eventFilter = (t === 'all') ? [] : ((App.eventFilter || []).indexOf(t) >= 0 ? (App.eventFilter || []).filter((x) => x !== t) : (App.eventFilter || []).concat([t]));
+        App.eventIdx = 0;
+        render();
+        openEvents();
+      });
+    });
+    document.querySelectorAll('[data-ev-go]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const t = Number(el.getAttribute('data-ev-go'));
+        App.viewStart = Math.max(0, t - 1);
+        render();
+        closeEvents();
+      });
+    });
+    const jumpEvent = (dir) => {
+      const evs = v1DemoEvents().filter(function (e) { return !(App.eventFilter && App.eventFilter.length) || App.eventFilter.indexOf(e.label) >= 0; });
+      if (!evs.length) return;
+      let idx = (App.eventIdx == null ? 0 : App.eventIdx) + dir;
+      if (idx < 0) idx = evs.length - 1;
+      if (idx >= evs.length) idx = 0;
+      App.eventIdx = idx;
+      App.viewStart = Math.max(0, evs[idx].t - 1);
+      render();
+      openEvents();
+    };
+    const btnEvPrev = $('btnEvPrev');
+    if (btnEvPrev) btnEvPrev.addEventListener('click', () => jumpEvent(-1));
+    const btnEvNext = $('btnEvNext');
+    if (btnEvNext) btnEvNext.addEventListener('click', () => jumpEvent(1));
+    // 快捷键帮助
+    const openKeys = () => { const d = $('keyModal'), bd = $('keyBackdrop'); if (d) d.hidden = false; if (bd) bd.hidden = false; };
+    const tbMenuKeys = $('tbMenuKeys');
+    if (tbMenuKeys) tbMenuKeys.addEventListener('click', () => { closeTbMenu(); openKeys(); });
+    const btnKeyClose = $('btnKeyClose');
+    if (btnKeyClose) btnKeyClose.addEventListener('click', () => { const d = $('keyModal'), bd = $('keyBackdrop'); if (d) d.hidden = true; if (bd) bd.hidden = true; });
+    const keyBackdrop = $('keyBackdrop');
+    if (keyBackdrop) keyBackdrop.addEventListener('click', () => { const d = $('keyModal'), bd = $('keyBackdrop'); if (d) d.hidden = true; if (bd) bd.hidden = true; });
+    // SVG 状态：分析区间点击、事件图例筛选
+    const svgRangeStatus = $('svgRangeStatus');
+    if (svgRangeStatus) svgRangeStatus.addEventListener('click', () => {
+      if (!confirm('以当前查看窗口作为分析时间范围？现有区间将被覆盖。')) return;
+      const s = App.viewStart || 0, e = s + (App.viewSecs || 10);
+      App.analysisRange = { start: Math.max(0, s), end: Math.min(10, e) };
+      App.preDirty = true;
+      render();
+      toast('分析时间范围已设为 ' + s.toFixed(1) + '–' + e.toFixed(1) + ' s');
+    });
+    document.querySelectorAll('[data-ev-legend]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const t = el.getAttribute('data-ev-legend');
+        App.eventFilter = (App.eventFilter || []).indexOf(t) >= 0 ? (App.eventFilter || []).filter((x) => x !== t) : (App.eventFilter || []).concat([t]);
+        render();
+      });
+    });
+    // 快捷键
+    window.removeEventListener('keydown', window.__toolbarKey);
+    window.__toolbarKey = (ev) => {
+      const tag = (ev.target && ev.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+      if (ev.key === 'Escape') {
+        if (App.prevView) { App.viewStart = App.prevView.start; App.viewSecs = App.prevView.secs; App.prevView = null; }
+        clearToolModes();
+        render();
+      } else if (ev.key === '-' || ev.key === '=') {
+        const s = App.viewSecs || 10;
+        App.viewSecs = ev.key === '-' ? Math.max(0.5, s / 1.4) : Math.min(10, s * 1.4);
+        render();
+      } else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') {
+        const s = App.viewSecs || 10;
+        App.viewStart = Math.max(0, Math.min(10 - s, (App.viewStart || 0) + (ev.key === 'ArrowLeft' ? -s * 0.5 : s * 0.5)));
+        render();
+      } else if (ev.key === 'Home') {
+        App.viewStart = 0; render();
+      } else if (ev.key === 'z' || ev.key === 'Z') {
+        const b = $('btnZoomRect'); if (b) b.click();
+      } else if (ev.key === 'm' || ev.key === 'M') {
+        const b = $('btnMeasure'); if (b) b.click();
+      } else if (ev.key === 'a' || ev.key === 'A') {
+        const b = $('btnAnnotate'); if (b) b.click();
+      }
+    };
+    window.addEventListener('keydown', window.__toolbarKey);
+    updViewPage();
+    document.removeEventListener('click', window.__tbDocClick);
+    window.__tbDocClick = (ev) => {
+      if (ev.target && ev.target.id !== 'tbMore' && !(ev.target.closest && ev.target.closest('#tbMenu'))) closeTbMenu();
+    };
+    document.addEventListener('click', window.__tbDocClick);
     const btnInfoDrawer = $('btnInfoDrawer');
     if (btnInfoDrawer) btnInfoDrawer.addEventListener('click', () => { $('infoDrawer').hidden = false; $('infoBackdrop').hidden = false; });
     const btnInfoClose = $('btnInfoClose');
     if (btnInfoClose) btnInfoClose.addEventListener('click', () => { $('infoDrawer').hidden = true; $('infoBackdrop').hidden = true; });
     const infoBackdrop = $('infoBackdrop');
     if (infoBackdrop) infoBackdrop.addEventListener('click', () => { $('infoDrawer').hidden = true; $('infoBackdrop').hidden = true; });
-    const btnPreDrawer = $('btnPreDrawer');
-    if (btnPreDrawer) btnPreDrawer.addEventListener('click', () => { $('preDrawer').hidden = false; $('preBackdrop').hidden = false; });
+    const dockRail = $('dockRail');
+    if (dockRail) dockRail.addEventListener('click', () => { App.dockOpen = true; render(); });
+    const dockCollapseBar = $('dockCollapseBar');
+    if (dockCollapseBar) dockCollapseBar.addEventListener('click', () => { App.dockOpen = true; render(); });
     const btnPreClose = $('btnPreClose');
-    if (btnPreClose) btnPreClose.addEventListener('click', () => { $('preDrawer').hidden = true; $('preBackdrop').hidden = true; });
-    const preBackdrop = $('preBackdrop');
-    if (preBackdrop) preBackdrop.addEventListener('click', () => { $('preDrawer').hidden = true; $('preBackdrop').hidden = true; });
-    const modeAuto = $('modeAuto');
-    if (modeAuto) modeAuto.addEventListener('click', () => { App.cleanMode = 'auto'; render(); });
-    const modeManual = $('modeManual');
-    if (modeManual) modeManual.addEventListener('click', () => { App.cleanMode = 'manual'; render(); });
+    if (btnPreClose) btnPreClose.addEventListener('click', () => { App.dockOpen = false; render(); });
+    const dockBackdrop = $('dockBackdrop');
+    if (dockBackdrop) dockBackdrop.addEventListener('click', () => { App.dockOpen = false; render(); });
+    // 色带点击 → 复核 popover（自动清洗后的人工纠错入口）
+    const svgWrap = $('previewCanvasWrap');
+    document.querySelectorAll('[data-seg]').forEach((el) => {
+      el.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const parts = el.getAttribute('data-seg').split(':');
+        const kind = parts[0], i = Number(parts[1]);
+        const segMap = {
+          bad: [App.badSegs || [], '坏段', '#e46a50', '振幅/梯度超阈值（如 200µV），参与删除或置零'],
+          art: [App.artifactSegs || [], '伪迹', '#d9a514', '振幅或梯度超阈值，仅提示'],
+          interp: [App.interpSegs || [], '插值段', '#3f7fd6', '坏道插值修复区间']
+        };
+        const cfg = segMap[kind];
+        if (!cfg || !cfg[0][i]) return;
+        const seg = cfg[0][i];
+        const pop = $('segPopover');
+        if (!pop || !svgWrap) return;
+        pop.innerHTML = '<b style="color:' + cfg[2] + '">' + cfg[1] + '：' + seg.start.toFixed(2) + '–' + seg.end.toFixed(2) + ' s</b><br><span class="muted small">触发规则：' + cfg[3] + '</span><div style="margin-top:8px;display:flex;gap:6px"><button class="btn" data-seg-act="remove" type="button">忽略此段</button><button class="btn" data-seg-act="to-bad" type="button">转坏段</button><button class="btn" data-seg-act="close" type="button">关闭</button></div>';
+        pop.hidden = false;
+        const rect = svgWrap.getBoundingClientRect();
+        pop.style.left = Math.max(8, Math.min(ev.clientX - rect.left, rect.width - 290)) + 'px';
+        pop.style.top = Math.max(8, ev.clientY - rect.top - 46) + 'px';
+        pop.dataset.kind = kind;
+        pop.dataset.idx = String(i);
+      });
+    });
+    const segPopover = $('segPopover');
+    if (segPopover) segPopover.addEventListener('click', (ev) => {
+      const t = ev.target;
+      const act = t && t.getAttribute ? t.getAttribute('data-seg-act') : null;
+      if (!act) return;
+      const kind = segPopover.dataset.kind, i = Number(segPopover.dataset.idx);
+      if (act === 'close') { segPopover.hidden = true; return; }
+      const arr = kind === 'bad' ? (App.badSegs = App.badSegs || []) : kind === 'art' ? (App.artifactSegs = App.artifactSegs || []) : (App.interpSegs = App.interpSegs || []);
+      if (act === 'remove') { if (arr[i]) arr.splice(i, 1); }
+      else if (act === 'to-bad' && kind !== 'bad') { const seg = arr[i]; if (seg) { arr.splice(i, 1); (App.badSegs = App.badSegs || []).push(seg); } }
+      segPopover.hidden = true;
+      App.preDirty = true;
+      render();
+    });
+    // 波形分析区间：手柄拖拽（左/右/整体移动）
+    const svgRangeInfo = () => {
+      const svg = $('previewWaveSvg');
+      if (!svg) return null;
+      const r = svg.getBoundingClientRect();
+      if (!r.width) return null;
+      return { r, start: App.viewStart || 0, secs: App.viewSecs || 10 };
+    };
+    const rangeTimeFromEvent = (ev) => {
+      const m = svgRangeInfo();
+      if (!m) return null;
+      const vx = ((ev.clientX - m.r.left) / m.r.width) * 980;
+      const t = m.start + ((vx - 74) / 898) * m.secs;
+      return Math.max(0, Math.min(10, t));
+    };
+    const rangeHandles = [['svgRangeL', 'l'], ['svgRangeR', 'r'], ['svgRangeBody', 'b']];
+    rangeHandles.forEach(([id, kind]) => {
+      const el = $(id);
+      if (el) el.addEventListener('mousedown', (ev) => { ev.preventDefault(); window.__rangeDrag = kind; });
+    });
+    window.removeEventListener('mousemove', window.__rangeMove);
+    window.removeEventListener('mouseup', window.__rangeUp);
+    window.__rangeMove = (ev) => {
+      if (!window.__rangeDrag) return;
+      const t = rangeTimeFromEvent(ev);
+      if (t == null) return;
+      const r = App.analysisRange || { start: 0, end: 10 };
+      if (window.__rangeDrag === 'l') App.analysisRange = { start: Math.min(t, r.end - 0.2), end: r.end };
+      else if (window.__rangeDrag === 'r') App.analysisRange = { start: r.start, end: Math.max(t, r.start + 0.2) };
+      else { const w = Math.max(0.2, r.end - r.start); const s = Math.max(0, Math.min(10 - w, t - w / 2)); App.analysisRange = { start: s, end: s + w }; }
+      render();
+    };
+    window.__rangeUp = () => { if (window.__rangeDrag) { window.__rangeDrag = null; App.preDirty = true; } };
+    window.addEventListener('mousemove', window.__rangeMove);
+    window.addEventListener('mouseup', window.__rangeUp);
     const preHistoryToggle = $('preHistoryToggle');
     if (preHistoryToggle) preHistoryToggle.addEventListener('click', () => {
       const body = $('preHistoryBody'), arrow = $('preHistoryArrow');
@@ -3860,9 +4742,125 @@ ${qeegSubjectCard}
       const v = (App.preVersions || []).length ? App.preVersions[App.preVersions.length - 1].id : '尚未应用预处理';
       toast('导出处理后数据（' + v + '）：本批为入口演示，不生成真实文件。');
     });
-    ['preHp', 'preLp', 'preNotch', 'preBadArt', 'preArt', 'preStart', 'preEnd', 'preBadPolicy', 'preIca', 'preReref', 'preBadChan'].forEach((id) => {
+    const paramKeyMap = { preHp: 'hp', preLp: 'lp', preNotch: 'notch', preBadArt: 'badArt', preArt: 'art', preBadPolicy: 'policy', preIca: 'ica', preReref: 'reref', preBadChan: 'badChan' };
+    Object.keys(paramKeyMap).forEach((id) => {
       const el = $(id);
-      if (el) el.addEventListener('change', () => { if ((App.preVersions || []).length) App.preDirty = true; updatePreApplyNote(); });
+      if (el) el.addEventListener('change', () => {
+        App.preParams = Object.assign({}, App.preParams || {}, { [paramKeyMap[id]]: el.value });
+        if ((App.preVersions || []).length) App.preDirty = true;
+        updatePreApplyNote();
+      });
+    });
+    const timeToSec = (v) => {
+      const m = String(v || '').split(':').map(Number);
+      if (m.length !== 3 || m.some((n) => !Number.isFinite(n))) return null;
+      return m[0] * 3600 + m[1] * 60 + m[2];
+    };
+    ['preStart', 'preEnd'].forEach((id) => {
+      const el = $(id);
+      if (el) el.addEventListener('change', () => {
+        const r = Object.assign({}, App.analysisRange || { start: 0, end: 10 });
+        const v = timeToSec(el.value);
+        if (v == null) { toast('时间格式应为 HH:MM:SS'); return; }
+        if (id === 'preStart') r.start = Math.max(0, Math.min(v, r.end - 0.2));
+        else r.end = Math.min(10, Math.max(v, r.start + 0.2));
+        App.analysisRange = r;
+        App.preDirty = true;
+        render();
+        toast('分析时间范围已更新：' + r.start.toFixed(1) + '–' + r.end.toFixed(1) + ' s');
+      });
+    });
+    const setRerefMode = (mode) => {
+      App.preParams = Object.assign({}, App.preParams || {}, { rerefMode: mode });
+      App.preDirty = true;
+      render();
+    };
+    document.querySelectorAll('[data-reref]').forEach((el) => {
+      el.addEventListener('click', () => { if (!el.disabled) setRerefMode(el.getAttribute('data-reref')); });
+    });
+    const rerefChannelSel = $('rerefChannelSel');
+    if (rerefChannelSel) rerefChannelSel.addEventListener('change', () => {
+      App.preParams = Object.assign({}, App.preParams || {}, { rerefChannel: rerefChannelSel.value });
+      App.preDirty = true;
+      render();
+    });
+    document.querySelectorAll('[data-quick-ref]').forEach((el) => {
+      el.addEventListener('click', () => {
+        App.preParams = Object.assign({}, App.preParams || {}, { rerefChannel: el.getAttribute('data-quick-ref') });
+        App.preDirty = true;
+        render();
+      });
+    });
+    const btnRerefPickWave = $('btnRerefPickWave');
+    if (btnRerefPickWave) btnRerefPickWave.addEventListener('click', () => {
+      App.rerefPickMode = true;
+      render();
+      toast('请在波形上点击一个通道行作为参考通道');
+    });
+    const btnRerefPickCancel = $('btnRerefPickCancel');
+    if (btnRerefPickCancel) btnRerefPickCancel.addEventListener('click', () => {
+      App.rerefPickMode = false;
+      render();
+    });
+    document.querySelectorAll('[data-chan]').forEach((el) => {
+      el.addEventListener('click', () => {
+        if (!App.rerefPickMode) return;
+        const name = el.getAttribute('data-chan');
+        App.preParams = Object.assign({}, App.preParams || {}, { rerefMode: 'chan', rerefChannel: name });
+        App.rerefPickMode = false;
+        App.preDirty = true;
+        render();
+        toast('已选择参考通道：' + name);
+      });
+    });
+    const badAddSel = $('badAddSel');
+    if (badAddSel) badAddSel.addEventListener('change', () => {
+      const name = badAddSel.value;
+      const list = (App.preParams.badList || []).slice();
+      if (list.some((b) => b.name === name)) { toast(name + ' 已在坏道列表中'); return; }
+      list.push({ name, source: 'manual' });
+      App.preParams = Object.assign({}, App.preParams || {}, { badList: list });
+      App.preDirty = true;
+      render();
+    });
+    const btnTrailToggle = $('btnTrailToggle');
+    if (btnTrailToggle) btnTrailToggle.addEventListener('click', () => {
+      const body = $('preHistoryBody');
+      if (!body) return;
+      const open = body.hidden;
+      body.hidden = !open;
+      const n = (App.preLog || []).length;
+      btnTrailToggle.textContent = open ? '收起 ▲' : '操作记录' + (n ? ' · ' + n : '') + ' ▾';
+    });
+    document.querySelectorAll('[data-bad-rm]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const name = el.getAttribute('data-bad-rm');
+        App.preParams = Object.assign({}, App.preParams || {}, { badList: ((App.preParams.badList || []).filter((b) => b.name !== name)) });
+        App.preDirty = true;
+        render();
+      });
+    });
+    const btnBadDetect = $('btnBadDetect');
+    if (btnBadDetect) btnBadDetect.addEventListener('click', () => {
+      App.badCandidates = [{ name: 'O1', reason: '方差过高' }, { name: 'F7', reason: '梯度异常' }];
+      render();
+    });
+    const btnBadConfirm = $('btnBadConfirm');
+    if (btnBadConfirm) btnBadConfirm.addEventListener('click', () => {
+      const list = (App.preParams.badList || []).slice();
+      (App.badCandidates || []).forEach(function (c) {
+        if (!list.some((b) => b.name === c.name)) list.push({ name: c.name, source: 'auto', reason: c.reason });
+      });
+      App.preParams = Object.assign({}, App.preParams || {}, { badList: list });
+      App.badCandidates = [];
+      App.preDirty = true;
+      render();
+      toast('已确认 ' + (list.length) + ' 个坏道（含自动检测）');
+    });
+    const btnBadIgnore = $('btnBadIgnore');
+    if (btnBadIgnore) btnBadIgnore.addEventListener('click', () => {
+      App.badCandidates = [];
+      render();
     });
     // 批次②：EMG 模块
     const emgStart = $('btnEmgStart');
@@ -5014,7 +6012,7 @@ ${qeegSubjectCard}
     { sel: '#entryQuick', title: '能力域入口', text: '产品按能力域分三个模块：脑电与生理信号分析（可用）、建模与仿真（待开放）、单元放电分析（待开放）。' },
     { sel: '#btnQuickStart', title: '进入主工作台', text: '点击「快速分析」进入脑电与生理信号分析工作台；教学将使用内置模拟数据走通完整流程。' },
     { sel: '#demoDataCard', title: '载入内置示例数据', text: '教学模式下内置模拟记录。请点击「人 · 整夜睡眠」，一键载入示例文件。', prepare: () => { if (App.workspaceMode !== 'quick') enterQuick(); } },
-    { sel: '#preApplyNote', title: '数据清洗与预处理', text: '原始数据确认后，打开右侧「数据清洗与预处理」抽屉：自动模式一键清洗（含 QC 摘要），手动模式按算子逐步执行；改动后显示“将应用”摘要。点击「一键自动清洗」生成处理版本。', prepare: () => { navigate('q-overview'); setTimeout(() => { const d = $('preDrawer'); const bd = $('preBackdrop'); if (d) d.hidden = false; if (bd) bd.hidden = false; }, 120); } },
+    { sel: '#preApplyNote', title: '数据预览与预处理', text: '原始数据确认后，在波形上直接选择分析时间范围（蓝色区间/手柄）并复核伪迹标记（色带可点击）；右侧竖条可展开「预处理与清洗设置」，自动模式一键清洗并生成可回退版本。', prepare: () => { navigate('q-overview'); setTimeout(() => { App.dockOpen = true; render(); }, 120); } },
     { sel: '#presetSection', title: '配置分析方案', text: '在这里选择预置分析方案（如人 · 整夜睡眠）或自定义组合；运行将在本步骤内完成。', prepare: () => navigate('q-choose', { focus: 'preset' }) },
     { sel: '#btnQuickExport', title: '结果复核与导出', text: '运行完成后，结果版本在这里查看、复核并导出结果包。教学到此完成，退出后界面不再出现教学与演示内容。', prepare: () => navigate('q-result') }
   ];
