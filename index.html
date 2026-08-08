@@ -482,12 +482,12 @@ padding: 16px;
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
         </div>
         <h3>脑电与生理信号分析</h3>
-        <p>生理信号的一站式分析。</p>
+        <p>睡眠、心电、肌电、癫痫、麻醉与 QEEG 的生理信号分析。</p>
         <div class="entry-actions">
           <button class="btn primary" id="btnQuickStart" type="button">快速分析</button>
           <button class="btn" id="btnFullStart" type="button">项目管理</button>
         </div>
-        <p class="entry-note" id="fullDesc">快速：本地单文件 · 项目：登录后按项目归档 <button class="entry-link" id="btnQuickDemo" type="button">演示模式</button></p>
+        <p class="entry-note" id="fullDesc">快速：本地单文件即时分析 · 项目：研究项目数据批量管理与分析 <button class="entry-link" id="btnQuickDemo" type="button">演示模式</button></p>
       </div>
       <div class="entry-card" id="entrySim">
         <span class="tag amber">待开放</span>
@@ -495,12 +495,12 @@ padding: 16px;
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg>
         </div>
         <h3>建模与仿真</h3>
-        <p>脑刺激电场仿真。</p>
+        <p>脑刺激电场仿真，覆盖任务配置、求解、剂量与三维可视化。</p>
         <div class="entry-actions">
           <button class="btn" id="btnSimStart" type="button">快速分析</button>
           <button class="btn" id="btnSimProj" type="button">项目管理</button>
         </div>
-        <p class="entry-note">快速：临时试算 · 项目：仿真方案归档</p>
+        <p class="entry-note">快速：临时试算 · 项目：仿真方案批量管理与分析</p>
       </div>
       <div class="entry-card" id="entrySpike">
         <span class="tag amber">待开放</span>
@@ -508,12 +508,12 @@ padding: 16px;
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>
         </div>
         <h3>单元放电分析（Spike）</h3>
-        <p>单细胞放电分析。</p>
+        <p>单细胞放电分析，覆盖聚类、质量门控、放电统计与事件锁定。</p>
         <div class="entry-actions">
           <button class="btn" id="btnSpikeStart" type="button">快速分析</button>
           <button class="btn" id="btnSpikeProj" type="button">项目管理</button>
         </div>
-        <p class="entry-note">快速：单文件临时分析 · 项目：受试者/会话归档</p>
+        <p class="entry-note">快速：单文件即时分析 · 项目：受试者/会话批量管理与分析</p>
       </div>
     </div>
   </div>
@@ -892,7 +892,7 @@ padding: 16px;
   function renderLaunch() {
     $('quickTag').textContent = '可用';
     const fullDesc = $('fullDesc');
-    if (fullDesc) fullDesc.textContent = App.loggedIn ? '快速：本地单文件 · 项目：已登录，按项目归档' : '快速：本地单文件 · 项目：登录后按项目归档';
+    if (fullDesc) fullDesc.textContent = App.loggedIn ? '快速：本地单文件即时分析 · 项目：研究项目数据批量管理与分析' : '快速：本地单文件即时分析 · 项目：研究项目数据批量管理与分析';
     const demoBtn = $('btnQuickDemo');
     if (demoBtn) { demoBtn.disabled = false; demoBtn.hidden = !App.teaching; }
     const cover = $('coverAccount');
