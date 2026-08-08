@@ -660,7 +660,7 @@ padding: 16px;
     <section class="workspace">
       <header class="topbar">
         <h1 id="pageTitle">工作台</h1>
-        <span class="cap-tag" id="capTag">V1</span>
+        <span class="cap-tag" id="capTag"></span>
         <span class="spacer"></span>
         <span class="account-chip" id="accountChip"></span>
         <button class="btn" id="btnHelp" type="button">帮助</button>
@@ -921,7 +921,7 @@ if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模�
   }
 
   function capabilityText() {
-    return App.workspaceMode === 'quick' ? 'V1' : roleLabel();
+    return App.workspaceMode === 'quick' ? '' : roleLabel();
   }
 
   function accountText() {
@@ -998,6 +998,7 @@ if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模�
       : '工作台';
     capTag.textContent = capabilityText();
     capTag.className = 'cap-tag ' + capTagClass();
+    capTag.style.display = capTag.textContent ? '' : 'none';
     accountChip.textContent = accountText();
   }
 
