@@ -780,7 +780,7 @@ padding: 16px;
     const m = App.deploymentMode, w = App.workspaceMode, r = App.currentRole;
     if (r !== 'customer') return { ok: false, reason: '未知身份（已重置为科研账户）' };
     if (w === 'quick') {
-      if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模式（无登录、本地临时工作区）' };
+if (m !== 'local') return { ok: false, reason: '快速分析仅支持本地模式（无登录）' };
       if (r !== 'customer') return { ok: false, reason: '快速分析仅面向科研用户' };
       return { ok: true };
     }
@@ -4731,7 +4731,7 @@ ${qeegSubjectCard}
     app.hidden = false;
     loginOverlay.hidden = true;
     render();
-    toast('已进入快速分析 · 本地临时工作区');
+    toast('已进入分析工作台');
   }
 
   function enterFull() {
